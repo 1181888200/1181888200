@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Controller 标准协议模拟器</title>
+
+    <style>
+        .row {
+            margin-top: 15px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div style="padding:3%;">
+
+
+        <div class="row" style="width: 100%;">
+            <div class="col-4">
+                <!-- 设备连接信息-->
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label for="inputAddress">切换环境</label>
+                        <select class="form-control form-control-lg" id="chargeEvn">
+                            <option
+                                value="http://hems-dev-front.vppcloud.com:1111/api/iems-goeu-oadr-vtn/OpenADR2/Simple/2.0b/"
+                                selected>DEV 环境</option>
+                            <option
+                                value="https://hems-uat-front.vppcloud.com/api/hems/iems-goeu-oadr-vtn/OpenADR2/Simple/2.0b/">
+                                UAT 环境</option>
+                            <option
+                                value="https://hems-en-prd-front.vppcloud.com/api/hems/iems-goeu-oadr-vtn/OpenADR2/Simple/2.0b/">
+                                PRD 环境</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputEmail4">指令类型</label>
+                        <select class="form-control form-control-lg" id="commandUrl">
+                            <option value="EiRegisterParty" selected>（首次）注册查询</option>
+                            <option value="EiReport">注册设备</option>
+                            <option value="OadrPoll">拉取指令</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputPassword4">ControllerSn</label>
+                        <input type="text" class="form-control" id="controllerSn" required value="0101191234200040">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputEmail4">设备品牌</label>
+                        <input type="text" class="form-control" id="deviceBrand" required value="enjoyelec">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputEmail4">设备型号</label>
+                        <input type="text" class="form-control" id="deviceModel" required value="EE-EMS-EB02">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputPassword4">设备版本号</label>
+                        <input type="text" class="form-control" id="deviceVersion" value="1.0.2">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button id="connectBtn" onclick="mumalQuery()" class="btn btn-primary">请求指令</button>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button onclick="clearLog()" class="btn btn-danger">清除日志</button>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button id="relayBtn" onclick="relayDiv()" class="btn btn-primary">Relay设备状态上报</button>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button id="searchDeviceBtn" onclick="searchDevice()" class="btn btn-primary">自动搜索子设备</button>
+                    </div>
+                </div>
+
+                <!-- 控制界面 -->
+                <div class="row" id="sendContentDiv">
+                    <div class="row">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">设备列表</span>
+                            </div>
+                            <select class="form-control form-control-lg" id="activeDevice">
+                                <option value="battery">储能</option>
+                                <option value="grid">市电</option>
+                                <option value="pv">光伏</option>
+                                <option value="hvac">HVAC</option>
+                                <option value="socket">智能插座</option>
+                                <option value="temp">温湿度传感器</option>
+                                <option value="charger">充电桩</option>
+                                <option value="load">负载</option>
+                                <option value="hvac-haier">海尔类型HVAC</option>
+                                <option value="device-alarm">告警</option>
+                                <option value="iftttRuleLogReport">ifttt规则日志上报</option>
+                                <option value="controllerQueryEvent">主动查询配置</option>
+                            </select>
+                            &nbsp;&nbsp;&nbsp;
+                            <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="controllerQueryEventDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            主动查询配置
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">事件列表</label>
+                            <select class="form-control form-control-lg" id="controllerQueryEventSelect">
+                                <option value="HOME_STRATEGY_CONFIG">家庭策略配置</option>
+                                <option value="BATTERY_CONFIG">储能配置</option>
+                                <option value="BATTERY_STRATEGY">储能策略</option>
+                                <option value="CHARGE_CONFIG">充电桩配置</option>
+                                <option value="CHARGE_STRATEGY">充电桩策略</option>
+                                <option value="PV_STRATEGY">光伏策略</option>
+                                <option value="HVAC_CONFIG">热泵配置</option>
+                                <option value="STATION_PRICE">家庭价格</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">设备SN</label>
+                            <input type="text" class="form-control" id="controllerQueryEventDeviceSn" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="controllerQueryEvent()" 
+                                    class="btn btn-primary">查询事件</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="iftttRuleLogReportDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            ifttt规则日志上报
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">规则内容</label>
+                            <input type="text" class="form-control" id="ruleMessage" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">规则ID</label>
+                            <input type="number" class="form-control" id="ruleId" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">状态</label>
+                            <input type="number" class="form-control" id="ruleStatus" placeholder="">
+                        </div>
+                       
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="iftttRuleLogReport()" 
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="batteryDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            储能设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">储能SN</label>
+                            <input type="number" class="form-control" id="snBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">储能功率</label>
+                            <input type="number" class="form-control" id="powerRealBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电压</label>
+                            <input type="number" class="form-control" id="voltageBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电流</label>
+                            <input type="number" class="form-control" id="currentBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">SOC</label>
+                            <input type="number" class="form-control" id="socBttery" placeholder="SOC">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计用电量</label>
+                            <input type="number" class="form-control" id="importEnergyBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计放电量</label>
+                            <input type="number" class="form-control" id="exportEnergyBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">今日用电量</label>
+                            <input type="number" class="form-control" id="todayImportEnergyBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">今日放电量</label>
+                            <input type="number" class="form-control" id="todayExportEnergyBattery" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValueBattery()" id="meterValueBattery"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <button onclick="activeDeviceRegister('battery')" id="meterValueBatteryRegister"
+                                    class="btn btn-primary">注册1.0设备</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="relayDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            Relay设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">设备SN</label>
+                            <input type="text" class="form-control" id="relayDeviceSn" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">状态</label>
+                            <select class="form-control form-control-lg" id="relayMode">
+                                <option value="0" selected>关</option>
+                                <option value="1">开</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValueRelay()" id="meterValueRelay"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="gridDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            市电设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">市电SN</label>
+                            <input type="text" class="form-control" id="snGrid" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">功率</label>
+                            <input type="number" class="form-control" id="powerRealGrid" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计用电量（Wh）</label>
+                            <input type="number" class="form-control" id="importEnergyGrid" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计发电量（Wh）</label>
+                            <input type="number" class="form-control" id="exportEnergyGrid" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValueGrid()" id="meterValueGrid"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <button onclick="activeDeviceRegister('grid')" id="meterValueGridRegister"
+                                    class="btn btn-primary">注册1.0设备</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="pvDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            光伏设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">光伏SN</label>
+                            <input type="text" class="form-control" id="snPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">功率</label>
+                            <input type="number" class="form-control" id="powerRealPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计发电量</label>
+                            <input type="number" class="form-control" id="exportEnergyPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">A相电压</label>
+                            <input type="number" class="form-control" id="voltageAPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">A相电流</label>
+                            <input type="number" class="form-control" id="currentAPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">B相电压</label>
+                            <input type="number" class="form-control" id="voltageBPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">B相电流</label>
+                            <input type="number" class="form-control" id="currentBPv" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuePv()" id="meterValuePv" class="btn btn-primary">上报数据</button>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <button onclick="activeDeviceRegister('pv')" id="meterValuePvRegister"
+                                    class="btn btn-primary">注册1.0设备</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            HVAC设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac sn</label>
+                            <input type="text" class="form-control" id="snHvac" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">功率</label>
+                            <input type="number" class="form-control" id="hvacPower" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电量（Wh）</label>
+                            <input type="number" class="form-control" id="hvacEnergy" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuesHvac()" id="meterValuesHvac"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacHaierDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            海尔HVAC设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac sn</label>
+                            <input type="text" class="form-control" id="snHvacHaier" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac 总开关</label>
+                              <select class="form-control form-control-lg" id="hvacSwitchOpen">
+                                <option value="0" selected>关</option>
+                                <option value="1">开</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac 配置json文件</label>
+                            <!-- <input type="text" class="form-control" id="hvacJson" placeholder=""> -->
+                            <textarea cols="10" rows="5" id="hvacJson" class="form-control">[{"switchOpen":1,"mode":1,"name":"zone2","key":"warm1","type":"warm","enable":1,"currentTemp":"22","setTemp":39.5},{"switchOpen":1,"mode":1,"name":"dhw","key":"dhw1","type":"dhw","enable":1,"currentTemp":40,"setTemp":38.5}]</textarea>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuesHvacHaier()" id="meterValuesHvacHaier"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="deviceAlarmDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            告警信息
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">设备 sn</label>
+                            <input type="text" class="form-control" id="snDeviceAlarm" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">设备 code</label>
+                            <input type="text" class="form-control" id="codeDeviceAlarm" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">告警状态</label>
+                              <select class="form-control form-control-lg" id="statusDeviceAlarm">
+                                <option value="1" selected>告警</option>
+                                <option value="2">恢复</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuesDeviceAlarm()" id="meterValuesDeviceAlarm"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="loadDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            LOAD设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">Load sn</label>
+                            <input type="text" class="form-control" id="snLoad" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">功率</label>
+                            <input type="number" class="form-control" id="loadPower" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电量（Wh）</label>
+                            <input type="number" class="form-control" id="loadEnergy" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuesLoad()" id="meterValuesLoad"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="chargerDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            充电桩设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">充电桩 sn</label>
+                            <input type="text" class="form-control" id="snCharger" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">功率</label>
+                            <input type="number" class="form-control" id="chargerPower" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电量（Wh）</label>
+                            <input type="number" class="form-control" id="chargerEnergy" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValuesCharger()" id="meterValuesCharger"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="socketDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            智能插座设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">智能插座设备SN</label>
+                            <input type="text" class="form-control" id="snSocket" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">开关</label>
+                            <input type="number" class="form-control" id="powerSwitchSocket"
+                                placeholder="0 关  1 开， 非1 都是关">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">实时功率（W）</label>
+                            <input type="number" class="form-control" id="powerRealSocket" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">累计用电量(Wh)</label>
+                            <input type="number" class="form-control" id="importEnergySocket" placeholder="">
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValueSocket()" id="meterValueSocket"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <button onclick="activeDeviceRegister('socket')" id="meterValueSocketRegister"
+                                    class="btn btn-primary">注册1.0设备</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="tempDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            温湿度传感器设备数据
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">温湿度传感器SN</label>
+                            <input type="text" class="form-control" id="snTemp" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">温度</label>
+                            <input type="number" class="form-control" id="temperatureTemp" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">湿度</label>
+                            <input type="number" class="form-control" id="humidityTemp" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">电池电量</label>
+                            <input type="number" class="form-control" id="batteryTemp" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="meterValueTemp()" id="meterValueTemp"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <button onclick="activeDeviceRegister('temp')" id="meterValueTempRegister"
+                                    class="btn btn-primary">注册1.0设备</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="col-8">
+                <!-- 日志输出界面 -->
+                <div id="messageDiv" class="overflow-auto"
+                    style="min-height: 400px;width: 100%;height: 80%;border: 1px solid red;">
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- 上报数据-->
+    <script>
+
+        function controllerQueryEvent() {
+            var eventName = $("#controllerQueryEventSelect").val()
+            var deviceSn = $("#controllerQueryEventDeviceSn").val()
+            if (!eventName) {
+                alert("输入规则ID、消息、状态");
+                return;
+            }
+            var controllerSn = $("#controllerSn").val()
+            deviceSn = deviceSn?deviceSn:controllerSn;
+            var dataXml = createString("deviceSn", deviceSn) + createString("event",eventName);
+            var obj = new Object();
+            upData('QUERY_EVENT', 'event', dataXml, obj,  deviceSn)
+
+        }
+
+        
+        function iftttRuleLogReport() {
+            var ruleId = $("#ruleId").val()
+            var ruleMessage = $("#ruleMessage").val()
+            var ruleStatus = $("#ruleStatus").val()
+
+            if (!ruleId || !ruleMessage || !ruleStatus) {
+                alert("输入规则ID、消息、状态");
+                return;
+            }
+            var controllerSn = $("#controllerSn").val()
+            var jsonParam = '{"cmd":"iftttRuleLogReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":[{"ruleId":"' + ruleId + '","message":"' + ruleMessage + '","status":"' + ruleStatus + '"}]}';
+            setReport(controllerSn, controllerSn, jsonParam)
+        }
+
+
+        // 光伏数据
+        function meterValuePv() {
+            var voltageA = $("#voltageAPv").val()
+            var currentA = $("#currentAPv").val()
+            var voltageB = $("#voltageBPv").val()
+            var currentB = $("#currentBPv").val()
+
+            var powerReal = $("#powerRealPv").val()
+            var exportEnergy = $("#exportEnergyPv").val()
+
+            var dataXml = '';
+            var obj = new Object();
+            if (exportEnergy) {
+                dataXml += createFloat('exportEnergy', exportEnergy);
+                obj.exportEnergy = exportEnergy;
+            }
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (voltageA) {
+                dataXml += createFloat('voltageA', voltageA);
+                obj.voltageA = voltageA;
+            }
+            if (currentA) {
+                dataXml += createFloat('currentA', currentA);
+                obj.currentA = currentA;
+            }
+            if (voltageB) {
+                dataXml += createFloat('voltageB', voltageB);
+                obj.voltageB = voltageB;
+            }
+            if (currentB) {
+                dataXml += createFloat('currentB', currentB);
+                obj.currentB = currentB;
+            }
+            upData('DEVICE_PV_STATUS', 'pv', dataXml, obj, $("#snPv").val())
+
+        }
+
+        // 储能数据
+        function meterValueBattery() {
+            var powerReal = $("#powerRealBattery").val()
+            var voltage = $("#voltageBattery").val()
+            var current = $("#currentBattery").val()
+            var soc = $("#socBttery").val()
+            var todayImportEnergy = $("#todayImportEnergyBattery").val()
+            var todayExportEnergy = $("#todayExportEnergyBattery").val()
+            var importEnergy = $("#importEnergyBattery").val()
+            var exportEnergy = $("#exportEnergyBattery").val()
+            var deviceSn = $("#snBattery").val()
+
+            var dataXml = '';
+            var obj = new Object();
+            if (todayExportEnergy) {
+                dataXml += createFloat('todayExportEnergy', todayExportEnergy);
+                obj.todayExportEnergy = todayExportEnergy;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            if (exportEnergy) {
+                dataXml += createFloat('exportEnergy', exportEnergy);
+                obj.exportEnergy = exportEnergy;
+            }
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (voltage) {
+                dataXml += createFloat('voltage', voltage);
+                obj.voltage = voltage;
+            }
+            if (current) {
+                dataXml += createFloat('current', current);
+                obj.current = current;
+            }
+            if (soc) {
+                dataXml += createFloat('soc', soc);
+                obj.soc = soc;
+            }
+            if (todayImportEnergy) {
+                dataXml += createFloat('todayImportEnergy', todayImportEnergy);
+                obj.todayImportEnergy = todayImportEnergy;
+            }
+            upData('DEVICE_BMS_STATUS', 'battery', dataXml, obj, deviceSn)
+
+        }
+
+        // 智能开关
+        function meterValueSocket() {
+            var powerSwitch = $("#powerSwitchSocket").val();
+            var powerReal = $("#powerRealSocket").val();
+            var importEnergy = $("#importEnergySocket").val();
+
+            var dataXml = '';
+            var obj = new Object();
+            if (powerSwitch) {
+                dataXml += createFloat('powerSwitch', powerSwitch);
+                obj.powerSwitch = powerSwitch;
+            }
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            upData('SOCKET_INFO', 'socket', dataXml, obj, $("#snSocket").val())
+        }
+
+        // 温湿度传感器
+        function meterValueTemp() {
+            var temperature = $("#temperatureTemp").val();
+            var humidity = $("#humidityTemp").val();
+            var battery = $("#batteryTemp").val();
+
+            var dataXml = '';
+            var obj = new Object();
+            if (temperature) {
+                dataXml += createFloat('temperature', temperature);
+                obj.temperature = temperature;
+            }
+            if (humidity) {
+                dataXml += createFloat('humidity', humidity);
+                obj.humidity = humidity;
+            }
+            if (battery) {
+                dataXml += createFloat('battery', battery);
+                obj.battery = battery;
+            }
+            upData('TEMPHUMI_INFO', 'temphumi', dataXml, obj, $("#snTemp").val())
+        }
+
+        // 市电数据
+        function meterValueGrid() {
+            var powerReal = $("#powerRealGrid").val()
+            var importEnergy = $("#importEnergyGrid").val()
+            var exportEnergy = $("#exportEnergyGrid").val()
+            var dataXml = '';
+            var obj = new Object();
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            if (exportEnergy) {
+                dataXml += createFloat('exportEnergy', exportEnergy);
+                obj.exportEnergy = exportEnergy;
+            }
+            upData('DEVICE_METER_STATUS', 'grid', dataXml, obj, $("#snGrid").val())
+        }
+
+        // 负载数据
+        function meterValuesLoad() {
+            var powerReal = $("#loadPower").val()
+            var importEnergy = $("#loadEnergy").val()
+            var dataXml = '';
+            var obj = new Object();
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            // upData('DEVICE_METER_STATUS', 'load', dataXml, obj,  $("#snLoad").val())
+            alert("未开发")
+        }
+
+        // HAVC数据
+        function meterValuesHvac() {
+            var powerReal = $("#hvacPower").val()
+            var importEnergy = $("#hvacEnergy").val()
+            var dataXml = '';
+            var obj = new Object();
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            // upData('DEVICE_METER_STATUS', 'hvac', dataXml, obj,  $("#snHvac").val())
+            alert("未开发")
+        }
+
+        // HAVC数据
+        function meterValuesHvacHaier() {
+            var hvacJson = $("#hvacJson").val()
+            var hvacSwitchOpen = $("#hvacSwitchOpen").val()
+            var snHvacHaier = $("#snHvacHaier").val()
+            
+            
+            var dataXml = '';
+            var obj = new Object();
+            if (hvacSwitchOpen) {
+                dataXml += createString('switchOpen', hvacSwitchOpen);
+                obj.hvacSwitchOpen = hvacSwitchOpen;
+            }
+            if (hvacJson) {
+                dataXml += createString('zone', hvacJson);
+                obj.hvacJson = hvacJson;
+            }
+            upData('HVAC_PUMP_DATA', 'hvac', dataXml, obj,  $("#snHvacHaier").val())
+        }
+
+        // 告警数据
+        function  meterValuesDeviceAlarm() {
+            var statusDeviceAlarm = $("#statusDeviceAlarm").val()
+            var snDeviceAlarm = $("#snDeviceAlarm").val()
+            var codeDeviceAlarm = $("#codeDeviceAlarm").val()
+            
+            var dataXml = '';
+            var obj = new Object();
+            if (!codeDeviceAlarm) {
+                alert("输入告警code");
+                return;
+            }
+            if (!snDeviceAlarm) {
+                alert("输入告警设备SN");
+                return;
+            }
+            var controllerSn = $("#controllerSn").val();
+            var jsonParam = '{"cmd":"deviceAlarmReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":[{"deviceSn":"' + snDeviceAlarm + '","status":'+statusDeviceAlarm+',"code":"'+codeDeviceAlarm+'","reportTime":"'+formatTime()+'"}]}';
+            setReport(controllerSn, controllerSn, jsonParam)
+        }
+
+        function registerHvacHaier() {
+            registerDevice(createController(), haierHvacDevice());
+        }
+
+
+        // charger数据
+        function meterValuesCharger() {
+            var powerReal = $("#chargerPower").val()
+            var importEnergy = $("#charegerEnergy").val()
+            var dataXml = '';
+            var obj = new Object();
+            if (powerReal) {
+                dataXml += createFloat('powerReal', powerReal);
+                obj.powerReal = powerReal;
+            }
+            if (importEnergy) {
+                dataXml += createFloat('importEnergy', importEnergy);
+                obj.importEnergy = importEnergy;
+            }
+            // upData('DEVICE_METER_STATUS', 'hvac', dataXml, obj,  $("#snCharger").val())
+            alert("未开发")
+        }
+
+
+        function createString(name, value) {
+            return '<oadr:oadrReportPayload><ei:rID>' + name + '</ei:rID><ps:payloadString><ps:value>' + value + '</ps:value></ps:payloadString></oadr:oadrReportPayload>';
+        }
+
+        function createFloat(name, value) {
+            return '<oadr:oadrReportPayload><ei:rID>' + name + '</ei:rID><ei:payloadFloat><ei:value>' + value + '</ei:value></ei:payloadFloat></oadr:oadrReportPayload>';
+        }
+
+
+        function upData(reportName, deviceType, dataXml, obj, subDeviceSn) {
+            var controllerSn = $("#controllerSn").val();
+            var deviceSn = subDeviceSn ? subDeviceSn : (controllerSn + "-" + deviceType);
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>deviceSn</ei:rID><ps:payloadString><ps:value>' + deviceSn + '</ps:value></ps:payloadString></oadr:oadrReportPayload>' + dataXml + '</ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>' + reportName + '</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + controllerSn + '</ei:venID></oadr:oadrUpdateReport>';
+            console.log("数据上报：", xml)
+            messageDiv(1, deviceType + " 数据上报 ==> ：<code>" + JSON.stringify(obj) + "</code>")
+            var chargeEvn = $("#chargeEvn").val();
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + 'EiReport', // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: xml, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("数据上报：", json)
+
+                    if (json['oadr:oadrUpdatedReport']) {
+                        // 错误提示
+                        var code = json['oadr:oadrUpdatedReport']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, deviceType + " 数据上报 ==> 服务器响应码：" + code)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+
+
+    </script>
+
+    <!-- 激活设备 -->
+    <script>
+        function activeDevice() {
+            var activeDevice = $("#activeDevice").val();
+            if (activeDevice == 'battery') {
+                $("#batteryDiv").show();
+            }
+            if (activeDevice == 'charger') {
+                $("#chargerDiv").show();
+            }
+            if (activeDevice == 'pv') {
+                $("#pvDiv").show();
+            }
+            if (activeDevice == 'load') {
+                $("#loadDiv").show();
+            }
+            if (activeDevice == 'grid') {
+                $("#gridDiv").show();
+            }
+            if (activeDevice == 'hvac') {
+                $("#hvacDiv").show();
+            }
+            if (activeDevice == 'temp') {
+                $("#tempDiv").show();
+            }
+            if (activeDevice == 'socket') {
+                $("#socketDiv").show();
+            }
+
+            if (activeDevice == 'charger') {
+                $("#chargerDiv").show();
+            }
+
+            if (activeDevice == 'hvac-haier') {
+                $("#hvacHaierDiv").show();
+            }
+
+            if (activeDevice == 'device-alarm') {
+                $("#deviceAlarmDiv").show();
+            }
+            if (activeDevice == 'iftttRuleLogReport') {
+                $("#iftttRuleLogReportDiv").show();
+            }
+
+            if (activeDevice == 'controllerQueryEvent') {
+                $("#controllerQueryEventDiv").show();
+            }
+
+        }
+
+        function activeDeviceRegister(activeDevice) {
+            if (activeDevice == 'battery') {
+                registerDevice(createController(), batteryDevice());
+            }
+            if (activeDevice == 'charger') {
+                registerDevice(createController(), chargeDevice());
+            }
+            if (activeDevice == 'pv') {
+                registerDevice(createController(), pvDevice());
+            }
+            if (activeDevice == 'load') {
+                registerDevice(createController(), loadDevice());
+            }
+            if (activeDevice == 'grid') {
+                registerDevice(createController(), gridDevice());
+            }
+            if (activeDevice == 'hvac') {
+                registerDevice(createController(), hvacDevice());
+            }
+            if (activeDevice == 'temp') {
+                registerDevice(createController(), temphumiDevice());
+            }
+            if (activeDevice == 'socket') {
+                registerDevice(createController(), socketDevice());
+            }
+        }
+
+    </script>
+
+
+    <!-- controller 相关 -->
+    <script>
+
+        // 辅助函数：将XML DOM转换为JSON对象
+        function xmlToJson(xml) {
+            var obj = {};
+
+            if (xml.nodeType == 1) { // element
+                if (xml.attributes.length > 0) {
+                    obj["@attributes"] = {};
+                    for (var j = 0; j < xml.attributes.length; j++) {
+                        var attribute = xml.attributes.item(j);
+                        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+                    }
+                }
+            } else if (xml.nodeType == 3) { // text
+                obj = xml.nodeValue;
+            }
+
+            if (xml.hasChildNodes()) {
+                for (var i = 0; i < xml.childNodes.length; i++) {
+                    var item = xml.childNodes.item(i);
+                    var nodeName = item.nodeName;
+                    if (typeof (obj[nodeName]) == "undefined") {
+                        obj[nodeName] = xmlToJson(item);
+                    } else {
+                        if (typeof (obj[nodeName].push) == "undefined") {
+                            var oldObj = obj[nodeName];
+                            obj[nodeName] = [];
+                            obj[nodeName].push(oldObj);
+                        }
+                        obj[nodeName].push(xmlToJson(item));
+                    }
+                }
+            }
+            return obj;
+        }
+
+        function registerQuery() {
+            var commandUrl = $("#commandUrl").val();
+            var chargeEvn = $("#chargeEvn").val();
+            var controllerSn = $("#controllerSn").val();
+
+            var queryController = '<?xml version="1.0" encoding="utf-8"?><oadrCreatePartyRegistration p1:schemaVersion="2.0a" xmlns:p1="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns="http://openadr.org/oadr-2.0b/2012/07"><requestID xmlns="http://docs.oasis-open.org/ns/energyinterop/201110/payloads">' + controllerSn + '</requestID><p1:venID>' + controllerSn + '</p1:venID><oadrProfileName>2.0a</oadrProfileName><oadrTransportName>simpleHttp</oadrTransportName><oadrTransportAddress>oadrTransportAddress</oadrTransportAddress><oadrReportOnly>true</oadrReportOnly><oadrXmlSignature>true</oadrXmlSignature><oadrVenName>' + controllerSn + '</oadrVenName><oadrHttpPullModel>true</oadrHttpPullModel></oadrCreatePartyRegistration>';
+
+            // var queryController = '<?xml version="1.0" encoding="utf-8"?><oadrQueryRegistration p1:schemaVersion="2.0a" xmlns:p1="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns="http://openadr.org/oadr-2.0b/2012/07"><requestID xmlns="http://docs.oasis-open.org/ns/energyinterop/201110/payloads">' + controllerSn + '</requestID></oadrQueryRegistration>'
+            console.log("注册查询：", queryController)
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + commandUrl, // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: queryController, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("注册查询响应：", json)
+                    var code = json['oadr:oadrCreatedPartyRegistration']['ei:eiResponse']['ei:responseCode']['#text'];
+                    messageDiv(0, "服务器响应码：" + code)
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                }
+            });
+        }
+
+        function queryEvent() {
+            var chargeEvn = $("#chargeEvn").val();
+            var commandUrl = $("#commandUrl").val();
+            var controllerSn = $("#controllerSn").val();
+            var queryCommand = '<?xml version="1.0" encoding="utf-8"?><oadrPoll p1:schemaVersion="2.0a" xmlns:p1="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns="http://openadr.org/oadr-2.0b/2012/07"><p1:venID>' + controllerSn + '</p1:venID></oadrPoll>'
+            console.log("事件查询：", queryCommand)
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + commandUrl, // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: queryCommand, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var serializer = new XMLSerializer();
+                    var xmlString = serializer.serializeToString(response);
+                    console.log("服务器下发xml => ", xmlString)
+                    var json = xmlToJson(response);
+                    console.log("事件查询响应：", json)
+
+                    if (json['oadr:oadrResponse']) {
+                        // 错误提示
+                        var code = json['oadr:oadrResponse']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, "服务器响应码：" + code)
+                    }
+
+                    if (json['oadr:oadrDistributeEvent']) {
+                        // 错误提示
+                        var code = json['oadr:oadrDistributeEvent']['oadr:oadrEvent']['ei:eiEvent']['ei:eiEventSignals']['ei:eiEventSignal']['ei:currentValue']['ei:payloadString']['ps:value']['#text'];
+                        var eventId = json['oadr:oadrDistributeEvent']['oadr:oadrEvent']['ei:eiEvent']['ei:eventDescriptor']['ei:eventID']['#text'];
+                        messageDiv(0, "事件ID: " + eventId + "<br/> 服务器下发事件：" + code)
+                        // TODO 需要响应时间接受成功
+
+                        var eventId = json["oadr:oadrDistributeEvent"]["oadr:oadrEvent"]["ei:eiEvent"]["ei:eventDescriptor"]["ei:eventID"]['#text'];
+                        // 处理对应的事件
+                        handlerCmd(code, eventId, json)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+
+
+
+        function registerDevice(controller, device) {
+            var chargeEvn = $("#chargeEvn").val();
+            var controllerSn = $("#controllerSn").val();
+            var array = []
+            array[0] = controller
+            if (device) {
+                array[1] = device
+            }
+
+            var devices = {
+                "devices": array
+            }
+
+            var devicesJson = JSON.stringify(devices);
+
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>devices</ei:rID><ps:payloadString><ps:value>' + devicesJson + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>DEVICE_REGISTER</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + controllerSn + '</ei:venID></oadr:oadrUpdateReport>';
+            console.log("注册设备：", xml)
+            messageDiv(1, "注册设备：<code>" + devicesJson + "</code>")
+
+
+            registerDeviceReport(xml)
+
+        }
+
+
+        function registerDeviceReport(xml) {
+            var chargeEvn = $("#chargeEvn").val();
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + 'EiReport', // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: xml, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("注册设备响应：", json)
+
+                    if (json['oadr:oadrUpdatedReport']) {
+                        // 错误提示
+                        var code = json['oadr:oadrUpdatedReport']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, "服务器响应码：" + code)
+                    }
+
+                    if (json['oadr:oadrDistributeEvent']) {
+                        // 错误提示
+                        var code = json['oadr:oadrDistributeEvent']['oadr:oadrEvent']['ei:eiEvent']['ei:eiEventSignals']['ei:eiEventSignal']['ei:currentValue']['ei:payloadString']['ps:value']['#text'];
+                        var eventId = json['oadr:oadrDistributeEvent']['oadr:oadrEvent']['ei:eiEvent']['ei:eventDescriptor']['ei:eventID']['#text'];
+                        messageDiv(0, "事件ID: " + eventId + "<br/> 服务器下发事件：" + code)
+                        // TODO 需要响应时间接受成功
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+
+        function createController() {
+            var controllerSn = $("#controllerSn").val();
+            var deviceBrand = $("#deviceBrand").val();
+            var deviceModel = $("#deviceModel").val();
+            var deviceVersion = $("#deviceVersion").val();
+            // var controller = {
+            //     "deviceName": "模拟器Controller",
+            //     "deviceSn": controllerSn,
+            //     "properties": {
+            //         "deviceType": "controller",
+            //         "type": "CONTROLLER",
+            //         "version": deviceVersion,
+            //         "hardwareVersion": deviceVersion,
+            //         "brand": deviceBrand,
+            //         "model": deviceModel
+            //     }
+            // }
+            var controller = { "deviceName": "模拟器Controller", "deviceSn": controllerSn, "properties": { "deviceType": "controller", "type": "CONTROLLER", "version": deviceVersion, "hardwareVersion": deviceVersion, "brand": deviceBrand, "model": deviceModel, "supportConfig": 1, "protocolVersion": "17" }, "configs": [{ "protocol": "ModbusRTU", "param": [{ "com": "com1", "comName": "RS485-1", "baudrate": "2400", "databit": "8", "stopbit": "1", "paritybit": "NONE" }, { "com": "com2", "comName": "RS485-2", "baudrate": "2400", "databit": "8", "stopbit": "1", "paritybit": "NONE" }, { "com": "com3", "comName": "RS485-3", "baudrate": "2400", "databit": "8", "stopbit": "1", "paritybit": "NONE" }, { "com": "com4", "comName": "RS485-4", "baudrate": "2400", "databit": "8", "stopbit": "1", "paritybit": "NONE" }] }] }
+
+            return controller;
+        }
+
+        function batteryDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "battery",
+                "deviceSn": controllerSn + "-battery",
+                "properties": {
+                    "deviceType": "battery",
+                    "type": "BATTERY",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function pvDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "pv",
+                "deviceSn": controllerSn + "-pv",
+                "properties": {
+                    "deviceType": "pv",
+                    "type": "PV",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function chargeDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "charger",
+                "deviceSn": controllerSn + "-charger",
+                "properties": {
+                    "deviceType": "charger",
+                    "type": "CHARGING_PILE",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function hvacDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "hvac",
+                "deviceSn": controllerSn + "-hvac",
+                "properties": {
+                    "deviceType": "hvac",
+                    "type": "HVAC",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function haierHvacDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "HEMS-hvac",
+                "deviceSn": controllerSn + "-HEMS-hvac",
+                "properties": {
+                    "deviceType": "hvacPump",
+                    "type": "HVAC",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function loadDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "load",
+                "deviceSn": controllerSn + "-load",
+                "properties": {
+                    "deviceType": "load",
+                    "type": "LOAD",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function socketDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "socket",
+                "deviceSn": controllerSn + "-socket",
+                "properties": {
+                    "deviceType": "socket",
+                    "type": "LOAD",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function gridDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "grid",
+                "deviceSn": controllerSn + "-grid",
+                "properties": {
+                    "deviceType": "grid",
+                    "type": "GRID",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+
+        function temphumiDevice() {
+            var controllerSn = $("#controllerSn").val();
+            var device = {
+                "deviceName": "temphumi",
+                "deviceSn": controllerSn + "-temphumi",
+                "properties": {
+                    "deviceType": "temphumi",
+                    "version": "2.0",
+                    "ratePower": "5",
+                    "rateCapacity": "10"
+                }
+            }
+            return device;
+        }
+    </script>
+
+
+    <!-- 响应处理结果 -->
+    <script>
+        function handlerCmd(value, eventId, oadr) {
+            var json = null;
+            try {
+                json = JSON.parse(value);
+            } catch (e) {
+                console.log("当前服务器下发事件不是json：", value)
+            }
+            if (!json) {
+                return
+            }
+
+            // 获取指令
+            var cmd = json.cmd
+            var taskId = json.data.taskId
+            var taskStatus = json.data.status
+            console.log("cmd: " + cmd + " taskId:" + taskId + " data:" + JSON.stringify(json.data))
+            var controllerSn = $("#controllerSn").val();
+
+            if (cmd == 'queryIftttRuleEvent') {
+                var jsonParam = '{"cmd":"queryIftttRuleEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+            }
+
+            if (cmd == 'deviceDiscoverEvent') {
+                var jsonParam = '{"cmd":"deviceDiscoverEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+                 // deviceDiscoverReport 上报扫描设备
+                 var length = Math.floor(Math.random() * 5) + 2;
+                 var deviceDiscoverDevices = '';
+                 for(let i = 1; i< length;i++) {
+                    deviceDiscoverDevices += '{"connectionType":"EEBus","discoverType":"remote","properties":{"ski":"skiNo_'+i+'","name":"eebusName_'+i+'","brand":"enjoyelec","type":"HVAC","model":"cc","register":false,"port":"9908","host":"133.11.11.11"}}';
+                    if (i != length - 1) {
+                        deviceDiscoverDevices += ',';
+                    }
+                }
+                jsonParam = '{"cmd":"deviceDiscoverReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":['+deviceDiscoverDevices+']}}'
+                setReport(controllerSn, controllerSn, jsonParam)
+            }
+
+            if (cmd == 'deviceScanConfigEvent') {
+             
+                // 缓存当前设备对应的配置信息
+                localStorage.setItem(taskId + ":config", JSON.stringify(json.data));
+
+
+                // 设备扫描配置事件
+                // 响应事件 deviceScanConfigEventResp
+                var jsonParam = '{"cmd":"deviceScanConfigEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+                if (taskStatus == 0) {
+                    messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
+                    return
+                }
+                // deviceScanConfigNotifyReport 再上报确认请求
+                jsonParam = '{"cmd":"deviceScanConfigNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
+                setReport(controllerSn, controllerSn, jsonParam)
+            }
+
+            if (cmd == 'sendDeviceSnEvent') {
+               
+                // 响应事件 sendDeviceSnEventResp
+                var jsonParam = '{"cmd":"sendDeviceSnEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+                if (taskStatus == 0) {
+                    messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
+                    return
+                }
+                // TODO  这里要拿到发过来的设备Code 和 设备SN
+                console.log("设备SN和设备CODE", JSON.stringify(json.data.devices))
+                // 缓存当前taskId 对应的设备SN
+                localStorage.setItem(taskId + ":devices", JSON.stringify(json.data.devices));
+
+                // sendDeviceSnNotifyReport 上报
+                jsonParam = '{"cmd":"sendDeviceSnNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":' + JSON.stringify(json.data.devices) + '}}'
+                setReport(controllerSn, controllerSn, jsonParam)
+            }
+
+            if (cmd == 'sendDeviceSnConfirmEvent') {
+                // 响应事件 sendDeviceSnConfirmEventResp
+                var jsonParam = '{"cmd":"sendDeviceSnConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+                if (taskStatus == 0) {
+                    messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
+                    return
+                }
+                // 发送注册信息
+                var config = JSON.parse(localStorage.getItem(taskId + ":config"));
+                var devices = JSON.parse(localStorage.getItem(taskId + ":devices"));
+
+                console.log("config", config)
+
+                console.log("devices", devices)
+
+                var controllerDevice = createController()
+
+                var type = config.deviceType;
+                var deviceType = config.deviceType.toLowerCase();
+                if (type == 'ENERGY') {
+                    type = 'BATTERY';
+                    deviceType = type.toLowerCase();
+                } else if (type =='CHP') {
+                    type = 'CHARGING_PILE';
+                    deviceType = "charger";
+                }else if (type =='ME') {
+                    var now = new Date();
+                    var currentMinute = now.getMinutes();
+                    type = 'GRID';
+                    deviceType = "grid";
+                    if(currentMinute % 10 > 5 ) {
+                        type = 'ME';
+                        deviceType = "meter";
+                    }
+                }
+             
+                var device = {
+                    "deviceName": deviceType,
+                    "deviceSn": devices[0].deviceSn,
+                    "supportConfig": 1,
+                    "properties": {
+                        "deviceType": deviceType,
+                        "version": "2.0",
+                        "type": type,
+                        "brand": config.brand,
+                        "model": config.model
+                    },
+                    "configs": [
+                        {
+                            "protocol": config.connectionType,
+                            "param": [getProtocalInfo(config.params)]
+                        }
+                    ]
+                }
+
+                var array = []
+                array[0] = controllerDevice
+                array[1] = device
+
+                var devices = {
+                    "devices": array
+                }
+                var devicesJson = JSON.stringify(devices);
+                var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>devices</ei:rID><ps:payloadString><ps:value>' + devicesJson + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>DEVICE_REGISTER</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + controllerSn + '</ei:venID></oadr:oadrUpdateReport>';
+                console.log("注册设备：", xml)
+                messageDiv(1, "注册设备：<code>" + devicesJson + "</code>")
+                registerDeviceReport(xml)
+            }
+
+
+            if (cmd == 'updateControllerComEvent') {
+                // 响应事件 updateControllerComEventResp
+                var jsonParam = '{"cmd":"updateControllerComEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+
+                // updateControllerComConfirmReport 再上报确认请求
+                jsonParam = '{"cmd":"updateControllerComConfirmReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
+                setReport(controllerSn, controllerSn, jsonParam)
+
+            }
+
+            if (cmd == 'updateControllerComConfirmEvent') {
+                var jsonParam = '{"cmd":"updateControllerComConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+
+            }
+
+            if (cmd == 'deviceSmartStrategyEvent') {
+                var jsonParam = '{"cmd":"deviceSmartStrategyEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+
+            }
+
+
+
+            if (cmd == 'deviceControlEvent') {
+                // 设备控制
+                var jsonParam = '{"cmd":"deviceControlEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+
+            }
+
+            if (cmd == 'updateDeviceProtocolConfigEvent') {
+                var deviceSn = json.data.deviceSn
+                var jsonParam = '{"cmd":"updateDeviceProtocolConfigEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, deviceSn, eventId, jsonParam)
+
+                // updateDeviceProtocolConfigConfirmReport 再上报确认请求
+                jsonParam = '{"cmd":"updateDeviceProtocolConfigConfirmReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
+                setReport(controllerSn, deviceSn, jsonParam)
+
+            }
+
+            if (cmd == 'updateDeviceProtocolConfigConfirmEvent') {
+                var deviceSn = json.data.deviceSn
+                var jsonParam = '{"cmd":"updateDeviceProtocolConfigConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                getEventResp(controllerSn, deviceSn, eventId, jsonParam)
+            }
+
+
+        }
+
+        function getProtocalInfo(param) {
+            debugger
+            if (param == null || param.length == 0) {
+                return null
+            }
+            var obj = {};
+            for (var i = 0; i < param.length; i++) {
+                obj[param[i].key] = param[i].value
+            }
+            return obj;
+        }
+
+        function relayDiv() {
+            $("#relayDiv").show();
+        }
+
+        function meterValueRelay() {
+            var deviceSn = $("#relayDeviceSn").val();
+            var collectorSn = $("#controllerSn").val();
+            var mode = $("#relayMode").val()
+            var upData = '{"cmd":"relayDataUploadReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"deviceSn":"' + deviceSn + '","mode":' + mode + '}}';
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>enjoyelecData</ei:rID><ps:payloadString><ps:value>' + upData + '</ps:value></ps:payloadString></oadr:oadrReportPayload><oadr:oadrReportPayload><ei:rID>deviceSn</ei:rID><ps:payloadString><ps:value>' + deviceSn + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>ENJOYELEC_REPORT</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + collectorSn + '</ei:venID></oadr:oadrUpdateReport>'
+            upDataReport(xml)
+        }
+
+        function upDataReport(xml) {
+            var chargeEvn = $("#chargeEvn").val();
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + 'EiReport', // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: xml, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("数据上报：", json)
+
+                    if (json['oadr:oadrUpdatedReport']) {
+                        // 错误提示
+                        var code = json['oadr:oadrUpdatedReport']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, " 数据上报 ==> 服务器响应码：" + code)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+
+        function setReport(venId, deviceSn, jsonData) {
+            messageDiv(1, " 数据上报 ==>：" + jsonData + " deviceSn:" + deviceSn)
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>enjoyelecData</ei:rID><ps:payloadString><ps:value>' + jsonData + '</ps:value></ps:payloadString></oadr:oadrReportPayload><oadr:oadrReportPayload><ei:rID>deviceSn</ei:rID><ps:payloadString><ps:value>' + deviceSn + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>ENJOYELEC_REPORT</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + venId + '</ei:venID></oadr:oadrUpdateReport>'
+            console.log("数据上报xml ==>", xml)
+            var chargeEvn = $("#chargeEvn").val();
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + 'EiReport', // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: xml, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("数据上报：", json)
+
+                    if (json['oadr:oadrUpdatedReport']) {
+                        // 错误提示
+                        var code = json['oadr:oadrUpdatedReport']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, " 数据上报 ==> 服务器响应码：" + code)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+        function getEventResp(venId, deviceSn, eventId, jsonParam) {
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>enjoyelecData</ei:rID><ps:payloadString><ps:value>' + jsonParam + '</ps:value></ps:payloadString></oadr:oadrReportPayload><oadr:oadrReportPayload><ei:rID>deviceSn</ei:rID><ps:payloadString><ps:value>' + deviceSn + '</ps:value></ps:payloadString></oadr:oadrReportPayload><oadr:oadrReportPayload><ei:rID>eventId</ei:rID><ps:payloadString><ps:value>' + eventId + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>ENJOYELEC_REPORT</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + venId + '</ei:venID></oadr:oadrUpdateReport>';
+            console.log("上报服务XML===> ", xml)
+            messageDiv(1, " 数据上报 ==>：" + jsonParam + " deviceSn:" + deviceSn)
+            var chargeEvn = $("#chargeEvn").val();
+            $.ajax({
+                type: 'POST',
+                url: chargeEvn + 'EiReport', // 替换为你的服务端URL
+                contentType: 'application/xml', // 设置请求头，指明发送的是XML格式数据
+                data: xml, // 发送的数据
+                dataType: 'xml', // 期望从服务器返回的数据类型
+                success: function (response) {
+                    var json = xmlToJson(response);
+                    console.log("数据上报：", json)
+
+                    if (json['oadr:oadrUpdatedReport']) {
+                        // 错误提示
+                        var code = json['oadr:oadrUpdatedReport']['ei:eiResponse']['ei:responseCode']['#text'];
+                        messageDiv(0, " 数据上报 ==> 服务器响应码：" + code)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误
+                    console.error("An error occurred: " + error);
+                    messageDiv(0, "服务器异常：" + error)
+                }
+            });
+        }
+
+        var searchDeviceTimeInterval = null;
+        function searchDevice() {
+            // 
+            var value = $("#searchDeviceBtn").text();
+            if (value == '自动搜索子设备') {
+                $("#searchDeviceBtn").text('关闭自动搜索子设备');
+                $("#searchDeviceBtn").addClass('btn-danger');
+                $("#searchDeviceBtn").removeClass('btn-primary');
+                searchDeviceTimeInterval = setInterval(toggleWebSocketConnection, 3000);
+            } else {
+                $("#searchDeviceBtn").text('自动搜索子设备');
+                $("#searchDeviceBtn").addClass('btn-primary');
+                $("#searchDeviceBtn").removeClass('btn-danger');
+                if (searchDeviceTimeInterval) {
+                    clearTimeout(searchDeviceTimeInterval)
+                }
+            }
+        }
+
+
+    </script>
+
+
+    <!-- 建立连接 -->
+    <script>
+
+        // 获取屏幕的高度
+        const screenHeight = window.innerHeight - 200;
+        // 获取需要设置高度的div元素
+        const myDiv = document.getElementById('messageDiv');
+        // 设置div的最大高度为屏幕高度
+        myDiv.style.maxHeight = `${screenHeight}px`;
+
+        function mumalQuery() {
+            if (!checkConnect()) {
+                return;
+            }
+            var commandUrl = $("#commandUrl").val();
+            if (commandUrl == 'EiRegisterParty') {
+                registerQuery();
+            }
+            if (commandUrl == 'EiReport') {
+                registerDevice(createController(), null);
+            }
+            if (commandUrl == 'OadrPoll') {
+                queryEvent();
+            }
+
+        }
+
+
+        function toggleWebSocketConnection() {
+            if (!checkConnect()) {
+                return;
+            }
+            $("#commandUrl").val('OadrPoll')
+            var commandUrl = $("#commandUrl").val();
+            if (commandUrl == 'EiRegisterParty') {
+                registerQuery();
+            }
+            if (commandUrl == 'EiReport') {
+                registerDevice(createController(), null);
+            }
+            if (commandUrl == 'OadrPoll') {
+                queryEvent();
+            }
+
+        }
+
+        function checkConnect() {
+
+            var chargeEvn = $("#chargeEvn").val();
+            var controllerSn = $("#controllerSn").val();
+            var deviceBrand = $("#deviceBrand").val();
+            var deviceModel = $("#deviceModel").val();
+            var deviceVersion = $("#deviceVersion").val();
+            if (!deviceBrand || !deviceModel) {
+                alertMsg("品牌、型号 必填")
+                return false;
+            }
+            return true;
+        }
+
+        // 设置基础信息不可编辑
+        function enableRegisterText(flag) {
+            $('#chargeEvn').prop('disabled', flag);
+            $('#controllerSn').prop('disabled', flag);
+            $('#deviceBrand').prop('disabled', flag);
+            $('#deviceModel').prop('disabled', flag);
+            $('#deviceVersion').prop('disabled', flag);
+        }
+
+
+    </script>
+
+    <!-- 页面渲染--->
+    <script>
+
+
+
+        function alertMsg(message) {
+            alert(message)
+        }
+
+        function generateUUID() {
+            var d = new Date().getTime();
+            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = (d + Math.random() * 16) % 16 | 0;
+                d = Math.floor(d / 16);
+                return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            return uuid;
+        }
+
+        function clearLog() {
+            $('#messageDiv').html('')
+        }
+
+        function formatTime() {
+            var date = new Date();
+            date.setHours(date.getHours() - 8)
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1; // 月份从0开始，需要加1
+            var day = date.getDate();
+            var hour = date.getHours();
+            var minute = date.getMinutes();
+            var second = date.getSeconds();
+            return year + '-' + getZoneStr(month) + month + '-' + getZoneStr(day) + day + 'T' + getZoneStr(hour) + hour + ':' + getZoneStr(minute) + minute + ':' + getZoneStr(second) + second + "Z";
+        }
+
+        function getZoneStr(value) {
+            return value < 10 ? "0" : "";
+        }
+
+
+        function messageDiv(type, message) {
+            var messageDiv = document.getElementById("messageDiv");
+            var div = document.createElement("div");
+            zujian = type == 1 ? '<div class="p-3 mb-2 bg-danger text-white">当前时间 ' + formatTime() + '<br><br> ' + message + '</div>' : '<div class="p-3 mb-2 bg-success text-white">当前时间 ' + formatTime() + '<br><br> ' + message + '</div>';
+
+            // zujian += type != 1 ? '<div class="d-flex flex-row bd-highlight"><div class="p-2 bd-highlight"><img src="https://static-qn.51miz.com/assets-v2/images/header/vip-firm-purple@2x.png" class="mr-3 scale-img" alt="..."></div><div class="p-2 bd-highlight" style="display: flex;justify-content: center; align-items: center; ">' + message + '</div></div>'
+            //     : '<div class="d-flex flex-row-reverse bd-highlight"><div class="p-2 bd-highlight"> <img src="https://static-qn.51miz.com/assets-v2/images/header/vip-person-green@2x.png" class="mr-3 scale-img" alt="..."></div><div class="p-2 bd-highlight" style="display: flex;justify-content: center; align-items: center; ">' + message + '</div></div>'
+
+            div.innerHTML = zujian;
+            messageDiv.appendChild(div);
+            scrollToBottom(messageDiv)
+        }
+
+        function scrollToBottom(element) {
+            element.scrollTop = element.scrollHeight;
+        }
+
+    </script>
+
+
+
+</body>
+
+</html>
