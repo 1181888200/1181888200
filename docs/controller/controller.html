@@ -101,6 +101,7 @@
                                 <option value="device-alarm">告警</option>
                                 <option value="iftttRuleLogReport">ifttt规则日志上报</option>
                                 <option value="controllerQueryEvent">主动查询配置</option>
+                                <option value="eebusReport">设备EEBUS设备发现</option>
                             </select>
                             &nbsp;&nbsp;&nbsp;
                             <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
@@ -910,6 +911,12 @@
             if (activeDevice == 'controllerQueryEvent') {
                 $("#controllerQueryEventDiv").show();
             }
+            if (activeDevice == 'eebusReport') {
+                // 上报EEBUS 设备发现
+                discoverDevices("local");
+            }
+
+            
 
         }
 
@@ -1282,8 +1289,27 @@
     </script>
 
 
+
+
+
     <!-- 响应处理结果 -->
     <script>
+
+      function discoverDevices(name) {
+        var controllerSn = $("#controllerSn").val();
+        // deviceDiscoverReport 上报扫描设备
+        var length = Math.floor(Math.random() * 5) + 2;
+        var deviceDiscoverDevices = '';
+        for(let i = 1; i< length;i++) {
+        deviceDiscoverDevices += '{"connectionType":"EEBus","discoverType":"'+name+'","properties":{"ski":"skiNo_'+i+'","name":"eebusName_'+i+name+'","brand":"enjoyelec","type":"HVAC","model":"cc","register":false,"port":"9908","host":"133.11.11.11"}}';
+        if (i != length - 1) {
+            deviceDiscoverDevices += ',';
+        }
+        }
+        jsonParam = '{"cmd":"deviceDiscoverReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":['+deviceDiscoverDevices+']}}'
+        setReport(controllerSn, controllerSn, jsonParam)
+      }
+
         function handlerCmd(value, eventId, oadr) {
             var json = null;
             try {
@@ -1311,16 +1337,7 @@
                 var jsonParam = '{"cmd":"deviceDiscoverEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
                  // deviceDiscoverReport 上报扫描设备
-                 var length = Math.floor(Math.random() * 5) + 2;
-                 var deviceDiscoverDevices = '';
-                 for(let i = 1; i< length;i++) {
-                    deviceDiscoverDevices += '{"connectionType":"EEBus","discoverType":"remote","properties":{"ski":"skiNo_'+i+'","name":"eebusName_'+i+'","brand":"enjoyelec","type":"HVAC","model":"cc","register":false,"port":"9908","host":"133.11.11.11"}}';
-                    if (i != length - 1) {
-                        deviceDiscoverDevices += ',';
-                    }
-                }
-                jsonParam = '{"cmd":"deviceDiscoverReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":['+deviceDiscoverDevices+']}}'
-                setReport(controllerSn, controllerSn, jsonParam)
+                discoverDevices("remote")
             }
 
             if (cmd == 'deviceScanConfigEvent') {
