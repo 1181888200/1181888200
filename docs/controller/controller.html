@@ -162,6 +162,22 @@
                         </div>
                     </div>
 
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="discoverDeviceDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            eebus 设备绑定发现上报
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">任务ID</label>
+                            <input type="number" class="form-control" id="discoverTaskId" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="discoverDeviceReport()" 
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="batteryDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
                             储能设备数据
@@ -530,6 +546,12 @@
 
     <!-- 上报数据-->
     <script>
+
+        function discoverDeviceReport(){
+            var taskId = $("#discoverTaskId").val()
+            discoverDevices("local",taskId);
+
+        }
 
         function controllerQueryEvent() {
             var eventName = $("#controllerQueryEventSelect").val()
@@ -913,7 +935,7 @@
             }
             if (activeDevice == 'eebusReport') {
                 // 上报EEBUS 设备发现
-                discoverDevices("local");
+                $("#discoverDeviceDiv").show();
             }
 
             
@@ -1295,7 +1317,7 @@
     <!-- 响应处理结果 -->
     <script>
 
-      function discoverDevices(name) {
+      function discoverDevices(name,taskId) {
         var controllerSn = $("#controllerSn").val();
         // deviceDiscoverReport 上报扫描设备
         var length = Math.floor(Math.random() * 5) + 2;
@@ -1337,7 +1359,7 @@
                 var jsonParam = '{"cmd":"deviceDiscoverEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
                  // deviceDiscoverReport 上报扫描设备
-                discoverDevices("remote")
+                discoverDevices("remote",taskId)
             }
 
             if (cmd == 'deviceScanConfigEvent') {
