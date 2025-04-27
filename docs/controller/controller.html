@@ -133,6 +133,9 @@
                             <div class="form-group col-md-6">
                                 <button onclick="controllerQueryEvent()" 
                                     class="btn btn-primary">查询事件</button>
+                                
+                                <button onclick="closeActiveDevice('controllerQueryEvent')" 
+                                    class="btn btn-danger">关闭窗体</button>
                             </div>
                         </div>
                     </div>
@@ -937,9 +940,57 @@
                 // 上报EEBUS 设备发现
                 $("#discoverDeviceDiv").show();
             }
+        }
 
-            
+        // 关闭
+        function closeActiveDevice(activeDevice) {
+            if (activeDevice == 'battery') {
+                $("#batteryDiv").hide();
+            }
+            if (activeDevice == 'charger') {
+                $("#chargerDiv").hide();
+            }
+            if (activeDevice == 'pv') {
+                $("#pvDiv").hide();
+            }
+            if (activeDevice == 'load') {
+                $("#loadDiv").hide();
+            }
+            if (activeDevice == 'grid') {
+                $("#gridDiv").hide();
+            }
+            if (activeDevice == 'hvac') {
+                $("#hvacDiv").hide();
+            }
+            if (activeDevice == 'temp') {
+                $("#tempDiv").hide();
+            }
+            if (activeDevice == 'socket') {
+                $("#socketDiv").hide();
+            }
 
+            if (activeDevice == 'charger') {
+                $("#chargerDiv").hide();
+            }
+
+            if (activeDevice == 'hvac-haier') {
+                $("#hvacHaierDiv").hide();
+            }
+
+            if (activeDevice == 'device-alarm') {
+                $("#deviceAlarmDiv").hide();
+            }
+            if (activeDevice == 'iftttRuleLogReport') {
+                $("#iftttRuleLogReportDiv").hide();
+            }
+
+            if (activeDevice == 'controllerQueryEvent') {
+                $("#controllerQueryEventDiv").hide();
+            }
+            if (activeDevice == 'eebusReport') {
+                // 上报EEBUS 设备发现
+                $("#discoverDeviceDiv").hide();
+            }
         }
 
         function activeDeviceRegister(activeDevice) {
