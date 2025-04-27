@@ -110,7 +110,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="controllerQueryEventDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            主动查询配置
+                            主动查询配置  <button onclick="closeActiveDevice('controllerQueryEvent')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">事件列表</label>
@@ -133,16 +133,13 @@
                             <div class="form-group col-md-6">
                                 <button onclick="controllerQueryEvent()" 
                                     class="btn btn-primary">查询事件</button>
-                                
-                                <button onclick="closeActiveDevice('controllerQueryEvent')" 
-                                    class="btn btn-danger">关闭窗体</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="iftttRuleLogReportDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            ifttt规则日志上报
+                            ifttt规则日志上报 <button onclick="closeActiveDevice('iftttRuleLogReport')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">规则内容</label>
@@ -167,7 +164,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="discoverDeviceDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            eebus 设备绑定发现上报
+                            eebus 设备绑定发现上报 <button onclick="closeActiveDevice('eebusReport')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">任务ID</label>
@@ -183,7 +180,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="batteryDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            储能设备数据
+                            储能设备数据 <button onclick="closeActiveDevice('battery')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">储能SN</label>
@@ -235,7 +232,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="relayDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            Relay设备数据
+                            Relay设备数据 <button onclick="closeActiveDevice('relay')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">设备SN</label>
@@ -259,7 +256,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="gridDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            市电设备数据
+                            市电设备数据 <button onclick="closeActiveDevice('grid')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">市电SN</label>
@@ -292,7 +289,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="pvDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            光伏设备数据
+                            光伏设备数据 <button onclick="closeActiveDevice('pv')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">光伏SN</label>
@@ -338,7 +335,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            HVAC设备数据
+                            HVAC设备数据 <button onclick="closeActiveDevice('hvac')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Hvac sn</label>
@@ -362,7 +359,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacHaierDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            海尔HVAC设备数据
+                            海尔HVAC设备数据 <button onclick="closeActiveDevice('hvac-haier')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Hvac sn</label>
@@ -390,7 +387,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="deviceAlarmDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            告警信息
+                            告警信息 <button onclick="closeActiveDevice('device-alarm')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">设备 sn</label>
@@ -417,7 +414,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="loadDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            LOAD设备数据
+                            LOAD设备数据 <button onclick="closeActiveDevice('load')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Load sn</label>
@@ -441,7 +438,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="chargerDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            充电桩设备数据
+                            充电桩设备数据 <button onclick="closeActiveDevice('charger')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">充电桩 sn</label>
@@ -467,7 +464,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="socketDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            智能插座设备数据
+                            智能插座设备数据 <button onclick="closeActiveDevice('socket')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">智能插座设备SN</label>
@@ -502,7 +499,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="tempDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            温湿度传感器设备数据
+                            温湿度传感器设备数据 <button onclick="closeActiveDevice('temp')" class="btn btn-danger">关闭窗体</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">温湿度传感器SN</label>
@@ -991,6 +988,12 @@
                 // 上报EEBUS 设备发现
                 $("#discoverDeviceDiv").hide();
             }
+            if (activeDevice == 'relay') {
+                // 上报EEBUS 设备发现
+                $("#relayDiv").hide();
+            }
+
+            
         }
 
         function activeDeviceRegister(activeDevice) {
