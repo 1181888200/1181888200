@@ -1407,6 +1407,7 @@
             if (cmd == 'queryIftttRuleEvent') {
                 var jsonParam = '{"cmd":"queryIftttRuleEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+                return
             }
 
             if (cmd == 'deviceDiscoverEvent') {
@@ -1414,6 +1415,7 @@
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
                  // deviceDiscoverReport 上报扫描设备
                 discoverDevices("remote",taskId)
+                return
             }
 
             if (cmd == 'deviceScanConfigEvent') {
@@ -1433,6 +1435,7 @@
                 // deviceScanConfigNotifyReport 再上报确认请求
                 jsonParam = '{"cmd":"deviceScanConfigNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
                 setReport(controllerSn, controllerSn, jsonParam)
+                return
             }
 
             if (cmd == 'sendDeviceSnEvent') {
@@ -1452,6 +1455,7 @@
                 // sendDeviceSnNotifyReport 上报
                 jsonParam = '{"cmd":"sendDeviceSnNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":' + JSON.stringify(json.data.devices) + '}}'
                 setReport(controllerSn, controllerSn, jsonParam)
+                return
             }
 
             if (cmd == 'sendDeviceSnConfirmEvent') {
@@ -1522,6 +1526,7 @@
                 console.log("注册设备：", xml)
                 messageDiv(1, "注册设备：<code>" + devicesJson + "</code>")
                 registerDeviceReport(xml)
+                return
             }
 
 
@@ -1533,19 +1538,19 @@
                 // updateControllerComConfirmReport 再上报确认请求
                 jsonParam = '{"cmd":"updateControllerComConfirmReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
                 setReport(controllerSn, controllerSn, jsonParam)
-
+                return
             }
 
             if (cmd == 'updateControllerComConfirmEvent') {
                 var jsonParam = '{"cmd":"updateControllerComConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
-
+                return
             }
 
             if (cmd == 'deviceSmartStrategyEvent') {
                 var jsonParam = '{"cmd":"deviceSmartStrategyEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
-
+                return
             }
 
 
@@ -1554,7 +1559,7 @@
                 // 设备控制
                 var jsonParam = '{"cmd":"deviceControlEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
-
+                return
             }
 
             if (cmd == 'updateDeviceProtocolConfigEvent') {
@@ -1565,14 +1570,20 @@
                 // updateDeviceProtocolConfigConfirmReport 再上报确认请求
                 jsonParam = '{"cmd":"updateDeviceProtocolConfigConfirmReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
                 setReport(controllerSn, deviceSn, jsonParam)
-
+                return
             }
 
             if (cmd == 'updateDeviceProtocolConfigConfirmEvent') {
                 var deviceSn = json.data.deviceSn
                 var jsonParam = '{"cmd":"updateDeviceProtocolConfigConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
                 getEventResp(controllerSn, deviceSn, eventId, jsonParam)
+                return
             }
+
+            // 默认收到之后，回复响应
+            taskId = taskId || null
+            var jsonParam = '{"cmd":"'+cmd+'Resp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+            getEventResp(controllerSn, controllerSn, eventId, jsonParam)
 
 
         }
