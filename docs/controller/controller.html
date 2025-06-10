@@ -79,6 +79,9 @@
                     <div class="form-group col-md-6">
                         <button id="searchDeviceBtn" onclick="searchDevice()" class="btn btn-primary">自动搜索子设备</button>
                     </div>
+                    <div class="form-group col-md-6">
+                        <button id="searchDeviceBtn" onclick="controllerHeart()" class="btn btn-primary">上报心跳</button>
+                    </div>
                 </div>
 
                 <!-- 控制界面 -->
@@ -1582,20 +1585,22 @@
 
             if (cmd == 'triggerMessageEvent') {
                 var deviceSn = json.data.deviceSn
-                var dataXml = 'ei:rID>'+deviceSn+'</ei:rID> <oadr:oadrPayloadResourceStatus> <oadr:oadrOnline>true</oadr:oadrOnline></oadr:oadrPayloadResourceStatus>'
-                upData("TELEMETRY_STATUS", deviceType, dataXml, {}, deviceSn) 
+                controllerHeart()
             }
 
             // 默认收到之后，回复响应
             taskId = taskId || null
             var jsonParam = '{"cmd":"'+cmd+'Resp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
             getEventResp(controllerSn, controllerSn, eventId, jsonParam)
+        }
 
-
+        function controllerHeart() {
+            var controllerSn = $("#controllerSn").val();
+            var dataXml = ' <oadr:oadrReportPayload><ei:rID>'+controllerSn+'</ei:rID> <oadr:oadrPayloadResourceStatus> <oadr:oadrOnline>true</oadr:oadrOnline></oadr:oadrPayloadResourceStatus> </oadr:oadrReportPayload>'
+            upData("TELEMETRY_STATUS", "TELEMETRY_STATUS", dataXml, {"oadrOnline":true}, controllerSn) 
         }
 
         function getProtocalInfo(param) {
-            debugger
             if (param == null || param.length == 0) {
                 return null
             }
