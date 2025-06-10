@@ -1580,6 +1580,12 @@
                 return
             }
 
+            if (cmd == 'triggerMessageEvent') {
+                var deviceSn = json.data.deviceSn
+                var dataXml = 'ei:rID>'+deviceSn+'</ei:rID> <oadr:oadrPayloadResourceStatus> <oadr:oadrOnline>true</oadr:oadrOnline></oadr:oadrPayloadResourceStatus>'
+                upData("TELEMETRY_STATUS", deviceType, dataXml, {}, deviceSn) 
+            }
+
             // 默认收到之后，回复响应
             taskId = taskId || null
             var jsonParam = '{"cmd":"'+cmd+'Resp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
