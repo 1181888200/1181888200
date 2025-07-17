@@ -65,7 +65,7 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label for="inputPassword4">设备版本号</label>
-                        <input type="text" class="form-control" id="deviceVersion" value="1.0.2">
+                        <input type="text" class="form-control" id="deviceVersion" value="4.0.2">
                     </div>
                     <div class="form-group col-md-6">
                         <button id="connectBtn" onclick="mumalQuery()" class="btn btn-primary">请求指令</button>
@@ -1479,8 +1479,8 @@
 
             // 获取指令
             var cmd = json.cmd
-            var taskId = json.data.taskId
-            var taskStatus = json.data.status
+            var taskId = json.data?.taskId
+            var taskStatus = json.data?.status
             console.log("cmd: " + cmd + " taskId:" + taskId + " data:" + JSON.stringify(json.data))
             var controllerSn = $("#controllerSn").val();
 
@@ -1512,8 +1512,24 @@
                     messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
                     return
                 }
+
+                // 混合逆变器的内容
+                const deviceAttachmentTypes = json.data.params.find(item => item.key === 'deviceAttachmentTypes');
+                var deviceSize = 1;
+                if(deviceAttachmentTypes && deviceAttachmentTypes.value && deviceAttachmentTypes.value.length > 0) {
+                    deviceSize = deviceAttachmentTypes.value.length
+                    localStorage.setItem(taskId + ":deviceAttachmentTypes", JSON.stringify(deviceAttachmentTypes.value));
+                }
+                var deviceList = '';
+                for (var i =0; i< deviceSize; i++) {
+                    deviceList += '{"deviceCode":"' + generateUUID() + '"}'
+                    if(i != (deviceSize-1)) {
+                        deviceList += ','
+                    }
+                }
+
                 // deviceScanConfigNotifyReport 再上报确认请求
-                jsonParam = '{"cmd":"deviceScanConfigNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":[{"deviceCode":"' + generateUUID() + '"}]}}'
+                jsonParam = '{"cmd":"deviceScanConfigNotifyReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000","devices":['+deviceList+']}}'
                 setReport(controllerSn, controllerSn, jsonParam)
                 return
             }
@@ -1550,55 +1566,65 @@
                 var config = JSON.parse(localStorage.getItem(taskId + ":config"));
                 var devices = JSON.parse(localStorage.getItem(taskId + ":devices"));
 
-                console.log("config", config)
-
-                console.log("devices", devices)
+                var deviceTypes =  JSON.parse(localStorage.getItem(taskId + ":deviceAttachmentTypes"))
+                
+                // deviceTypes =  deviceTypes?.[config.deviceType]
+                if(!deviceTypes) {
+                    deviceTypes = [config.deviceType]
+                }
 
                 var controllerDevice = createController()
-
-                var type = config.deviceType;
-                var deviceType = config.deviceType.toLowerCase();
-                if (type == 'ENERGY') {
-                    type = 'BATTERY';
-                    deviceType = type.toLowerCase();
-                } else if (type =='CHP') {
-                    type = 'CHARGING_PILE';
-                    deviceType = "charger";
-                }else if (type =='ME') {
-                    var now = new Date();
-                    var currentMinute = now.getMinutes();
-                    type = 'GRID';
-                    deviceType = "grid";
-                    if(currentMinute % 10 > 5 ) {
-                        type = 'ME';
-                        deviceType = "meter";
-                    }
-                }else if (type =='RELAY_IO') {
-                    deviceType = "IoRelay";
-                }
-             
-                var device = {
-                    "deviceName": deviceType,
-                    "deviceSn": devices[0].deviceSn,
-                    "supportConfig": 1,
-                    "properties": {
-                        "deviceType": deviceType,
-                        "version": "2.0",
-                        "type": type,
-                        "brand": config.brand,
-                        "model": config.model
-                    },
-                    "configs": [
-                        {
-                            "protocol": config.connectionType,
-                            "param": [getProtocalInfo(config.params)]
-                        }
-                    ]
-                }
-
                 var array = []
-                array[0] = controllerDevice
-                array[1] = device
+                array.push(controllerDevice) 
+                
+                var index = 0;
+                for (let type of deviceTypes) {
+                    var deviceType = type.toLowerCase();
+                    if (type == 'ENERGY') {
+                        type = 'BATTERY';
+                        deviceType = type.toLowerCase();
+                    } else if (type =='CHP') {
+                        type = 'CHARGING_PILE';
+                        deviceType = "charger";
+                    }else if (type =='ME') {
+                        var now = new Date();
+                        var currentMinute = now.getMinutes();
+                        type = 'GRID';
+                        deviceType = "grid";
+                        if(currentMinute % 10 > 5 ) {
+                            type = 'ME';
+                            deviceType = "meter";
+                        }
+                    }else if (type =='RELAY_IO') {
+                        deviceType = "IoRelay";
+                    }else if (type =='METER') {
+                        deviceType = "meter";
+                        type = 'ME'
+                    }
+                
+                    var device = {
+                        "deviceName": deviceType,
+                        "deviceSn": devices[index].deviceSn,
+                        "supportConfig": 1,
+                        "properties": {
+                            "deviceType": deviceType,
+                            "version": "2.0",
+                            "type": type,
+                            "brand": config.brand,
+                            "model": config.model
+                        },
+                        "configs": [
+                            {
+                                "protocol": config.connectionType,
+                                "param": [getProtocalInfo(config.params)]
+                            }
+                        ]
+                    }
+                    index++; 
+                    array.push(device) 
+                }
+
+                
 
                 var devices = {
                     "devices": array
