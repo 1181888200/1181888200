@@ -105,15 +105,43 @@
                                 <option value="iftttRuleLogReport">ifttt规则日志上报</option>
                                 <option value="controllerQueryEvent">主动查询配置</option>
                                 <option value="eebusReport">设备EEBUS设备发现</option>
+                                <option value="notifyReport">上报通知</option>
                             </select>
                             &nbsp;&nbsp;&nbsp;
                             <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
                         </div>
                     </div>
 
+                    <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="notifyReportDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            上报通知 <button onclick="closeActiveDevice('notifyReportDiv')" class="btn btn-danger">关闭</button>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">事件ID</label>
+                            <input type="text" class="form-control" id="notifyEventId" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">状态</label>
+                            <select class="form-control form-control-lg" id="notifyStatus">
+                                <option value="0" selected>成功</option>
+                                <option value="1">失败</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">错误信息</label>
+                            <input type="text" class="form-control" id="notifyMessage" placeholder="">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="notifyReport()" id="meterValueRelay"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="controllerQueryEventDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            主动查询配置  <button onclick="closeActiveDevice('controllerQueryEvent')" class="btn btn-danger">关闭窗体</button>
+                            主动查询配置  <button onclick="closeActiveDevice('controllerQueryEvent')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">事件列表</label>
@@ -126,6 +154,7 @@
                                 <option value="PV_STRATEGY">光伏策略</option>
                                 <option value="HVAC_CONFIG">热泵配置</option>
                                 <option value="STATION_PRICE">家庭价格</option>
+                                <option value="CONTROLLER_DEVICES">已绑定设备</option>
                             </select>
                         </div>
                         <div class="form-group col-md-6">
@@ -142,7 +171,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="iftttRuleLogReportDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            ifttt规则日志上报 <button onclick="closeActiveDevice('iftttRuleLogReport')" class="btn btn-danger">关闭窗体</button>
+                            ifttt规则日志上报 <button onclick="closeActiveDevice('iftttRuleLogReport')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">规则内容</label>
@@ -167,7 +196,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="discoverDeviceDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            eebus 设备绑定发现上报 <button onclick="closeActiveDevice('eebusReport')" class="btn btn-danger">关闭窗体</button>
+                            eebus 设备绑定发现上报 <button onclick="closeActiveDevice('eebusReport')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">任务ID</label>
@@ -183,7 +212,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="batteryDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            储能设备数据 <button onclick="closeActiveDevice('battery')" class="btn btn-danger">关闭窗体</button>
+                            储能设备数据 <button onclick="closeActiveDevice('battery')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">储能SN</label>
@@ -235,7 +264,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="relayDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            Relay设备数据 <button onclick="closeActiveDevice('relay')" class="btn btn-danger">关闭窗体</button>
+                            Relay设备数据 <button onclick="closeActiveDevice('relay')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">设备SN</label>
@@ -259,7 +288,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="gridDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            市电设备数据 <button onclick="closeActiveDevice('grid')" class="btn btn-danger">关闭窗体</button>
+                            市电设备数据 <button onclick="closeActiveDevice('grid')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">市电SN</label>
@@ -292,7 +321,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="pvDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            光伏设备数据 <button onclick="closeActiveDevice('pv')" class="btn btn-danger">关闭窗体</button>
+                            光伏设备数据 <button onclick="closeActiveDevice('pv')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">光伏SN</label>
@@ -338,7 +367,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            HVAC设备数据 <button onclick="closeActiveDevice('hvac')" class="btn btn-danger">关闭窗体</button>
+                            HVAC设备数据 <button onclick="closeActiveDevice('hvac')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Hvac sn</label>
@@ -362,7 +391,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="hvacHaierDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            海尔HVAC设备数据 <button onclick="closeActiveDevice('hvac-haier')" class="btn btn-danger">关闭窗体</button>
+                            海尔HVAC设备数据 <button onclick="closeActiveDevice('hvac-haier')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Hvac sn</label>
@@ -390,7 +419,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="deviceAlarmDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            告警信息 <button onclick="closeActiveDevice('device-alarm')" class="btn btn-danger">关闭窗体</button>
+                            告警信息 <button onclick="closeActiveDevice('device-alarm')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">设备 sn</label>
@@ -417,7 +446,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="loadDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            LOAD设备数据 <button onclick="closeActiveDevice('load')" class="btn btn-danger">关闭窗体</button>
+                            LOAD设备数据 <button onclick="closeActiveDevice('load')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Load sn</label>
@@ -441,7 +470,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="chargerDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            充电桩设备数据 <button onclick="closeActiveDevice('charger')" class="btn btn-danger">关闭窗体</button>
+                            充电桩设备数据 <button onclick="closeActiveDevice('charger')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">充电桩 sn</label>
@@ -467,7 +496,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="socketDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            智能插座设备数据 <button onclick="closeActiveDevice('socket')" class="btn btn-danger">关闭窗体</button>
+                            智能插座设备数据 <button onclick="closeActiveDevice('socket')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">智能插座设备SN</label>
@@ -502,7 +531,7 @@
 
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="tempDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
-                            温湿度传感器设备数据 <button onclick="closeActiveDevice('temp')" class="btn btn-danger">关闭窗体</button>
+                            温湿度传感器设备数据 <button onclick="closeActiveDevice('temp')" class="btn btn-danger">关闭</button>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">温湿度传感器SN</label>
@@ -569,6 +598,22 @@
             var obj = new Object();
             upData('QUERY_EVENT', 'event', dataXml, obj,  deviceSn)
 
+        }
+        // 上报消息
+        function notifyReport() {
+            var status = $("#notifyStatus").val()
+            var eventId = $("#notifyEventId").val()
+            if (!eventId) {
+                alert("输入事件ID");
+                return;
+            }
+            var notifyMessage = $("#notifyMessage").val()
+            var controllerSn = $("#controllerSn").val()
+            var xml = '{"signalName":"ENJOYELEC_EVENT","eventId":"'+eventId+'","status":"'+status+'","message":"'+notifyMessage+'"}'
+            var dataXml = createString("notifyInfo", xml) ;
+
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval>' + dataXml + '</ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>DEVICE_BOX_NOTIFY</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + controllerSn + '</ei:venID></oadr:oadrUpdateReport>';
+            registerDeviceReport(xml)
         }
 
         
@@ -895,106 +940,138 @@
             var activeDevice = $("#activeDevice").val();
             if (activeDevice == 'battery') {
                 $("#batteryDiv").show();
+                return
             }
             if (activeDevice == 'charger') {
                 $("#chargerDiv").show();
+                return
             }
             if (activeDevice == 'pv') {
                 $("#pvDiv").show();
+                return
             }
             if (activeDevice == 'load') {
                 $("#loadDiv").show();
+                return
             }
             if (activeDevice == 'grid') {
                 $("#gridDiv").show();
             }
             if (activeDevice == 'hvac') {
                 $("#hvacDiv").show();
+                return
             }
             if (activeDevice == 'temp') {
                 $("#tempDiv").show();
             }
             if (activeDevice == 'socket') {
                 $("#socketDiv").show();
+                return
             }
 
             if (activeDevice == 'charger') {
                 $("#chargerDiv").show();
+                return
             }
 
             if (activeDevice == 'hvac-haier') {
                 $("#hvacHaierDiv").show();
+                return
             }
 
             if (activeDevice == 'device-alarm') {
                 $("#deviceAlarmDiv").show();
+                return
             }
             if (activeDevice == 'iftttRuleLogReport') {
                 $("#iftttRuleLogReportDiv").show();
+                return
             }
 
             if (activeDevice == 'controllerQueryEvent') {
                 $("#controllerQueryEventDiv").show();
+                return
             }
             if (activeDevice == 'eebusReport') {
                 // 上报EEBUS 设备发现
                 $("#discoverDeviceDiv").show();
+                return
             }
+            var id = "#"+activeDevice+"Div"
+            $(id).show();
         }
 
         // 关闭
         function closeActiveDevice(activeDevice) {
             if (activeDevice == 'battery') {
                 $("#batteryDiv").hide();
+                return
             }
             if (activeDevice == 'charger') {
                 $("#chargerDiv").hide();
+                return
             }
             if (activeDevice == 'pv') {
                 $("#pvDiv").hide();
+                return
             }
             if (activeDevice == 'load') {
                 $("#loadDiv").hide();
+                return
             }
             if (activeDevice == 'grid') {
                 $("#gridDiv").hide();
+                return
             }
             if (activeDevice == 'hvac') {
                 $("#hvacDiv").hide();
+                return
             }
             if (activeDevice == 'temp') {
                 $("#tempDiv").hide();
+                return
             }
             if (activeDevice == 'socket') {
                 $("#socketDiv").hide();
+                return
             }
 
             if (activeDevice == 'charger') {
                 $("#chargerDiv").hide();
+                return
             }
 
             if (activeDevice == 'hvac-haier') {
                 $("#hvacHaierDiv").hide();
+                return
             }
 
             if (activeDevice == 'device-alarm') {
                 $("#deviceAlarmDiv").hide();
+                return
             }
             if (activeDevice == 'iftttRuleLogReport') {
                 $("#iftttRuleLogReportDiv").hide();
+                return
             }
 
             if (activeDevice == 'controllerQueryEvent') {
                 $("#controllerQueryEventDiv").hide();
+                return
             }
             if (activeDevice == 'eebusReport') {
                 // 上报EEBUS 设备发现
                 $("#discoverDeviceDiv").hide();
+                return
             }
             if (activeDevice == 'relay') {
                 // 上报EEBUS 设备发现
                 $("#relayDiv").hide();
+                return
             }
+
+            var id = "#"+activeDevice
+            $(id).hide();
 
             
         }
@@ -1177,7 +1254,7 @@
                 dataType: 'xml', // 期望从服务器返回的数据类型
                 success: function (response) {
                     var json = xmlToJson(response);
-                    console.log("注册设备响应：", json)
+                    console.log("设备响应：", json)
 
                     if (json['oadr:oadrUpdatedReport']) {
                         // 错误提示
