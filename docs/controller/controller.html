@@ -1466,9 +1466,9 @@
 
         for(let i = 1; i< length;i++) {
             if(connectionType === 'EEBus') {
-                deviceDiscoverDevices += '{"connectionType":"EEBus","discoverType":"'+name+'","properties":{"ski":"skiNo_'+i+'","name":"eebusName_'+i+name+'","brand":"enjoyelec","type":"HVAC","model":"cc","register":false,"port":"9908","host":"133.11.11.11"}}';
+                deviceDiscoverDevices += '{"connectionType":"EEBus","discoverType":"'+name+'","properties":{"ski":"skiNo_'+generateUUID()+'","name":"eebusName_'+i+name+'","brand":"enjoyelec","type":"HVAC","model":"cc","register":false,"port":"9908","host":"133.11.11.11"}}';
             }else if (connectionType === 'Shelly') {
-                deviceDiscoverDevices += '{"connectionType":"Shelly","discoverType":"'+name+'","properties":{"macAddress":"macAddress_'+i+name+'","brand":"enjoyelec","model":"ABC"}}';
+                deviceDiscoverDevices += '{"connectionType":"Shelly","discoverType":"'+name+'","properties":{"macAddress":"macAddress_'+generateUUID()+'","brand":"enjoyelec","model":"ABC"}}';
             }else{
                 alert("不支持该协议类型")
                 return
