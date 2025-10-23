@@ -107,12 +107,35 @@
                                 <option value="eebusReport">设备发现上报</option>
                                 <option value="notifyReport">上报通知</option>
                                 <option value="sgReadyReport">上报SGReady信号</option>
+                                <option value="mockTaskError">模拟任务失败</option>
                             </select>
                             &nbsp;&nbsp;&nbsp;
                             <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
                         </div>
                     </div>
 
+                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="mockTaskErrorDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            任务失败 <button onclick="closeActiveDevice('mockTaskErrorDiv')" class="btn btn-danger">关闭</button>
+                        </div>
+                       
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">错误码</label>
+                            <select class="form-control form-control-lg" id="mockTaskErrorCode">
+                                <option value="10011">TCP 连接错误</option>
+                                <option value="10022">TCP 通讯错误</option>
+                                <option value="20011">RTU 通讯错误</option>
+                                <option value="30011">连接超时</option>
+                            </select>
+                        </div>
+                      
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-6">
+                                <button onclick="mockTaskErrorDiv()"
+                                    class="btn btn-primary">清空数据</button>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="sgReadyReportDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
@@ -673,6 +696,9 @@
             registerDeviceReport(xml)
         }
 
+        function mockTaskErrorDiv() {
+            $("#mockTaskErrorCode").val("")
+        }
 
         // 上报SG ready的信号
         function sgReadyReport() {
@@ -1146,6 +1172,11 @@
                 $("#relayDiv").hide();
                 return
             }
+            
+            if (activeDevice == 'mockTaskErrorDiv') {
+               mockTaskErrorDiv(); 
+            }
+
 
             var id = "#"+activeDevice
             $(id).hide();
@@ -1647,7 +1678,14 @@
 
             if (cmd == 'sendDeviceSnConfirmEvent') {
                 // 响应事件 sendDeviceSnConfirmEventResp
-                var jsonParam = '{"cmd":"sendDeviceSnConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":1,"message":"","messageCode":"00000"}}';
+                var errorCode = $("#mockTaskErrorCode").val();
+                var status = 1;
+                var messageCode = "00000"
+                if(errorCode) {
+                    status = 0
+                    messageCode = errorCode
+                }
+                var jsonParam = '{"cmd":"sendDeviceSnConfirmEventResp","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"taskId":"' + taskId + '","status":'+status+',"message":"","messageCode":"'+messageCode+'"}}';
                 getEventResp(controllerSn, controllerSn, eventId, jsonParam)
                 if (taskStatus == 0) {
                     messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
