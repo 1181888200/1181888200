@@ -122,6 +122,7 @@
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">错误码</label>
                             <select class="form-control form-control-lg" id="mockTaskErrorCode">
+                                 <option value="">请选择错误信息</option>
                                 <option value="10011">TCP 连接错误</option>
                                 <option value="10022">TCP 通讯错误</option>
                                 <option value="20011">RTU 通讯错误</option>
@@ -1729,6 +1730,9 @@
                     }else if (type =='METER') {
                         deviceType = "meter";
                         type = 'ME'
+                    }else if (type =='CONTROL_BOX') {
+                        deviceType = "controlBox";
+                        type = 'LOAD'
                     }
                 
                     var device = {
