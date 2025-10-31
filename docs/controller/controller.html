@@ -109,13 +109,65 @@
                                 <option value="sgReadyReport">上报SGReady信号</option>
                                 <option value="mockTaskError">模拟任务失败</option>
                                 <option value="gridSignalInfo">电信号上报</option>
+                                <option value="controlBoxData">Control Box 数据上报</option>
                             </select>
                             &nbsp;&nbsp;&nbsp;
                             <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
                         </div>
                     </div>
 
-                    
+                     <!---Control Box 数据上报 -->
+                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="controlBoxDataDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            Control Box 数据上报 <button onclick="closeActiveDevice('controlBoxDataDiv')" class="btn btn-danger">关闭</button>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">设备SN</label>
+                            <input type="text" class="form-control" id="controlBoxDataSn" placeholder="">
+                        </div>
+                       
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">S1</label>
+                            <select class="form-control form-control-lg" id="controlBoxDataS1">
+                                 <option value="">请选择</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">S2</label>
+                            <select class="form-control form-control-lg" id="controlBoxDataS2">
+                                 <option value="">请选择</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">W3</label>
+                            <select class="form-control form-control-lg" id="controlBoxDataW3">
+                                 <option value="">请选择</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputEmail4">W4</label>
+                            <select class="form-control form-control-lg" id="controlBoxDataW4">
+                                 <option value="">请选择</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group col-md-12">
+                                <button onclick="controlBoxDataReport()"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!---电信号上报 -->
                      <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="gridSignalInfoDiv">
                         <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
                             电信号上报 <button onclick="closeActiveDevice('gridSignalInfoDiv')" class="btn btn-danger">关闭</button>
@@ -680,6 +732,8 @@
 
     <!-- 上报数据-->
     <script>
+
+       
 
         function discoverDeviceReport(){
             var taskId = $("#discoverTaskId").val()
@@ -1873,6 +1927,31 @@
 
         function relayDiv() {
             $("#relayDiv").show();
+        }
+
+        function controlBoxDataReport() {
+            var deviceSn = $("#controlBoxDataSn").val();
+            var collectorSn = $("#controllerSn").val();
+            var s1 = $("#controlBoxDataS1").val()
+            var s2 = $("#controlBoxDataS2").val()
+            var w3 = $("#controlBoxDataW3").val()
+            var w4 = $("#controlBoxDataW4").val()
+            var data = '';
+            if(s1) {
+                data += ', "s1":' + s1
+            }
+             if(s2) {
+                data += ', "s2":' + s2
+            }
+             if(w3) {
+                data += ', "w3":' + w3
+            }
+             if(w4) {
+                data += ', "w4":' + w4
+            }
+            var upData = '{"cmd":"controlBoxDataReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"online":1'+data+'}}';
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>enjoyelecData</ei:rID><ps:payloadString><ps:value>' + upData + '</ps:value></ps:payloadString></oadr:oadrReportPayload><oadr:oadrReportPayload><ei:rID>deviceSn</ei:rID><ps:payloadString><ps:value>' + deviceSn + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>ENJOYELEC_REPORT</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + collectorSn + '</ei:venID></oadr:oadrUpdateReport>'
+            upDataReport(xml)
         }
 
         function gridSignalInfoReport() {
