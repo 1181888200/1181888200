@@ -108,9 +108,31 @@
                                 <option value="notifyReport">上报通知</option>
                                 <option value="sgReadyReport">上报SGReady信号</option>
                                 <option value="mockTaskError">模拟任务失败</option>
+                                <option value="gridSignalInfo">电信号上报</option>
                             </select>
                             &nbsp;&nbsp;&nbsp;
                             <button onclick="activeDevice()" class="btn btn-primary">上报数据</button>
+                        </div>
+                    </div>
+
+                    
+                     <div class="row" style="border: 1px solid black;padding: 5px; display: none;" id="gridSignalInfoDiv">
+                        <div class="form-group col-md-12" style="font: 2em sans-serif;text-align: center;">
+                            电信号上报 <button onclick="closeActiveDevice('gridSignalInfoDiv')" class="btn btn-danger">关闭</button>
+                        </div>
+                       
+                        <div class="form-group col-md-12">
+                            <label for="inputEmail4">电信号JSon</label>
+                            <textarea cols="10" rows="5" id="hvacJson" class="form-control" id="gridSignalInfoMessage" >
+                                {"cmd":"gridSignalNotifyReport","requestId":"xxxxxxxxxxxxxxxxxxxxxxxx","requestTime":"2024-10-10T10:10:10Z","data":{"startTime":"2025-04-21T14:35:00Z","duration":"PT2H","signalType":"loadControlLimitData or loadControlLimitDataLpp or loadControlLimitData9aAct or loadControlLimitData14aAct","intervals":[{"id":0,"duration":"PT2H","value":99,"unit":"W","status":0}]}}
+                            </textarea>
+                        </div>
+                      
+                        <div class="form-group col-md-8">
+                            <div class="form-group col-md-8">
+                                <button onclick="gridSignalInfoReport()"
+                                    class="btn btn-primary">上报数据</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1851,6 +1873,15 @@
 
         function relayDiv() {
             $("#relayDiv").show();
+        }
+
+        function gridSignalInfoReport() {
+            var collectorSn = $("#controllerSn").val();
+            var gridSignalInfoMessage = $("#gridSignalInfoMessage").val()
+            //var upData = '{"cmd":"relayDataUploadReport","requestId":"' + generateUUID() + '","requestTime":"' + formatTime() + '","data":{"deviceSn":"' + deviceSn + '","mode":' + mode + '}}';
+            var upData = gridSignalInfoMessage
+            var xml = '<?xml version="1.0" encoding="utf-8"?><oadr:oadrUpdateReport ei:schemaVersion="2.0b" xsi:schemaLocation="http://openadr.org/oadr-2.0b/2012/07" xmlns:emix="http://docs.oasis-open.org/ns/emix/2011/06" xmlns:power="http://docs.oasis-open.org/ns/emix/2011/06/power" xmlns:scale="http://docs.oasis-open.org/ns/emix/2011/06/siscale" xmlns:ei="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:pyld="http://docs.oasis-open.org/ns/energyinterop/201110" xmlns:oadr="http://openadr.org/oadr-2.0b/2012/07" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xcal="urn:ietf:params:xml:ns:icalendar-2.0" xmlns:strm="urn:ietf:params:xml:ns:icalendar-2.0:stream" xmlns:ps="http://oadr.powershare.com.cn"><pyld:requestID>' + generateUUID() + '</pyld:requestID><oadr:oadrReport><xcal:dtstart><xcal:date-time>' + formatTime() + '</xcal:date-time></xcal:dtstart><strm:intervals><ei:interval><oadr:oadrReportPayload><ei:rID>enjoyelecData</ei:rID><ps:payloadString><ps:value>' + upData + '</ps:value></ps:payloadString></oadr:oadrReportPayload></ei:interval></strm:intervals><ei:eiReportID>1234</ei:eiReportID><ei:reportRequestID>1234</ei:reportRequestID><ei:reportSpecifierID>1234</ei:reportSpecifierID><ei:reportName>ENJOYELEC_REPORT</ei:reportName><ei:createdDateTime>' + formatTime() + '</ei:createdDateTime></oadr:oadrReport><ei:venID>' + collectorSn + '</ei:venID></oadr:oadrUpdateReport>'
+            upDataReport(xml)
         }
 
         function meterValueRelay() {
