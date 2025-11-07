@@ -1768,6 +1768,10 @@
                     messageDiv(0, " 数据上报 ==> 服务器终止任务：" + taskId)
                     return
                 }
+                if (status == 0) {
+                    messageDiv(0, " 数据上报 ==> 模拟任务失败：" + taskId)
+                    return
+                }
                 // 发送注册信息
                 var config = JSON.parse(localStorage.getItem(taskId + ":config"));
                 var devices = JSON.parse(localStorage.getItem(taskId + ":devices"));
