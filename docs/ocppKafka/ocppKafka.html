@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ocpp Kafka通讯结构</title>
+    <!-- 使用稳定国内 CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <!-- 引入 Vue (Element UI 依赖 Vue，作为底层库引入) -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/index.js"></script>
+    <!-- jQuery 使用国内稳定源 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f0f2f5;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            padding: 20px;
+        }
+        /* 整体布局 flex 左侧按钮栏 + 右侧内容区 */
+        .app-container {
+            display: flex;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+            min-height: 85vh;
+        }
+        /* 左侧按钮区域 */
+        .sidebar {
+            width: 260px;
+            background: #fafbfc;
+            border-right: 1px solid #e4e7ed;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .sidebar .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        /* 自定义按钮样式，融入 element 风格 */
+        .sidebar .el-button {
+            width: 100%;
+            justify-content: flex-start;
+            text-align: left;
+            font-size: 15px;
+            margin: 0;
+            transition: all 0.2s;
+        }
+        /* 右侧主内容区 */
+        .main-content {
+            flex: 1;
+            padding: 28px 32px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        /* 固定顶部设备信息栏 */
+        .device-header {
+            background: #f9fafc;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .device-header .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2f3d;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .device-header .title i {
+            color: #409eff;
+        }
+        .sn-field {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .sn-field .label {
+            font-weight: 500;
+            color: #5e6e82;
+            font-size: 14px;
+            min-width: 70px;
+        }
+        .sn-field .el-input {
+            width: 320px;
+        }
+        /* 动态表单区域 */
+        .dynamic-form-area {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #ebeef5;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+        .form-card {
+            padding: 20px 24px 28px;
+        }
+        .form-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 20px;
+            border-left: 4px solid #409eff;
+            padding-left: 14px;
+            line-height: 1.3;
+        }
+        /* element 表单样式微调 */
+        .el-form-item__label {
+            font-weight: 500;
+            color: #5a6a7e;
+        }
+        .action-buttons {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            border-top: 1px solid #f0f2f5;
+            padding-top: 24px;
+        }
+        /* JSON 展示样式 */
+        .json-preview {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: left;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            max-height: 450px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .json-preview .json-key {
+            color: #9cdcfe;
+        }
+        .json-preview .json-string {
+            color: #ce9178;
+        }
+        .json-preview .json-number {
+            color: #b5cea8;
+        }
+        .json-preview .json-boolean {
+            color: #569cd6;
+        }
+        .json-preview .json-null {
+            color: #569cd6;
+        }
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e4e7ed;
+            }
+            .sidebar .btn-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .sidebar .el-button {
+                width: auto;
+                flex: 1 0 auto;
+            }
+        }
+
+          /* 动态表格样式 */
+        .dynamic-table-container {
+            margin: 20px 0;
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dynamic-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .dynamic-table th {
+            background: #f5f7fa;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #606266;
+            border-bottom: 1px solid #e4e7ed;
+            font-size: 14px;
+        }
+        .dynamic-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ebeef5;
+            vertical-align: middle;
+        }
+        .dynamic-table tr:last-child td {
+            border-bottom: none;
+        }
+        .dynamic-table input, .dynamic-table select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        .dynamic-table input:focus, .dynamic-table select:focus {
+            outline: none;
+            border-color: #409eff;
+        }
+        .delete-row-btn {
+            background: #f56c6c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .delete-row-btn:hover {
+            background: #f78989;
+        }
+        .add-row-btn {
+            margin-top: 12px;
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- 左侧按钮区域 10个按钮 -->
+    <div class="sidebar">
+        <div class="btn-group">
+            <button type="button" class="el-button el-button--primary is-plain" data-tab="tab1">
+                <i class="el-icon-document"></i> 远程开启
+            </button>
+            <button type="button" class="el-button el-button--success is-plain" data-tab="tab2">
+                <i class="el-icon-setting"></i> 远程关闭
+            </button>
+            <button type="button" class="el-button el-button--warning is-plain" data-tab="tab3">
+                <i class="el-icon-share"></i> 读取配置
+            </button>
+            <button type="button" class="el-button el-button--danger is-plain" data-tab="tab4">
+                <i class="el-icon-edit-outline"></i> 修改配置
+            </button>
+            <button type="button" class="el-button el-button--info is-plain" data-tab="tab5">
+                <i class="el-icon-user"></i> 修改电流
+            </button>
+            <button type="button" class="el-button" data-tab="tab6">
+                <i class="el-icon-upload2"></i> 设置频率
+            </button>
+            <button type="button" class="el-button" data-tab="tab7">
+                <i class="el-icon-time"></i> 获取计划
+            </button>
+            <button type="button" class="el-button" data-tab="tab8">
+                <i class="el-icon-bell"></i> 本地授权列表
+            </button>
+            <button type="button" class="el-button" data-tab="tab9">
+                <i class="el-icon-data-line"></i> 设置本地列表
+            </button>
+            <button type="button" class="el-button" data-tab="tab10">
+                <i class="el-icon-files"></i> Smart Charging
+            </button>
+        </div>
+    </div>
+
+    <!-- 右侧内容区 -->
+    <div class="main-content">
+        <!-- 固定设备SN 和输入框 -->
+        <div class="device-header">
+            <div class="title">
+                <i class="el-icon-info" style="font-size: 20px;"></i> 
+                <span>设备信息</span>
+            </div>
+            <div class="sn-field">
+                <span class="label">设备序列号 (SN):</span>
+                <div class="el-input el-input--medium" style="width: 320px;">
+                    <input type="text" id="deviceSnInput" class="el-input__inner" placeholder="请输入设备SN" value="1111">
+                </div>
+                 <span class="label">设备品牌:</span>
+                <div class="el-input el-input--medium" style="width: 320px;">
+                    <input type="text" id="vendorId" class="el-input__inner" placeholder="请输入设备品牌" value="enjoyelec">
+                </div>
+            </div>
+        </div>
+
+        <!-- 动态内容区域: 根据左侧按钮显示不同表单内容 -->
+        <div class="dynamic-form-area" id="dynamicContent">
+            <!-- 默认显示第一个按钮对应的表单内容（基础信息） -->
+            <div id="tab1Content" class="form-card" style="display: block;">
+                <h3>📋 远程开启</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_START"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="start"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">远程开启</button>
+                    </div>
+                </form>
+            </div>
+            <!-- 其他tab内容容器 -->
+            <div id="tab2Content" class="form-card" style="display: none;">
+                <h3>🌐 远程关闭</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 交易ID(transactionId)</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="transactionId" required  placeholder="请输入交易ID: 必填"></div>
+                        </div>
+                    </div>
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_STOP"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="stop"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">远程关闭</button>
+                    </div>
+                </form>
+            </div>
+            <div id="tab3Content" class="form-card" style="display: none;">
+                <h3>⚠️ 读取配置</h3>
+
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_GET_CONFIGURATION"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="getConfiguration"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">读取配置</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab4Content" class="form-card" style="display: none;">
+                <h3>🛠️ 修改配置</h3>
+                
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 配置Key</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="key" required  placeholder="请输入配置Key: 必填"></div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 配置Value</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="value" required  placeholder="请输入配置Value: 必填"></div>
+                        </div>
+                    </div>
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="changeConfiguration"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">修改配置</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab5Content" class="form-card" style="display: none;">
+                <h3>👥 修改电流</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 电流</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="maxCurrent" required  placeholder="请输入电流: 必填"></div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 相位</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;">
+                                <div class="el-select" style="width:100%" >
+                                    <select class="el-input__inner" name="numberPhases">
+                                        <option selected>1</option>
+                                        <option>3</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="setCurrent"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">修改电流</button>
+                    </div>
+                </form>
+               
+            </div>
+            <div id="tab6Content" class="form-card" style="display: none;">
+                <h3>📀 设置频率</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 配置Key</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="key" required  value="MeterValueSampleInterval"></div>
+                        </div>
+                    </div>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 频率（秒）</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="value" required  placeholder="请输入频率（秒）: 必填"></div>
+                        </div>
+                    </div>
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="changeConfiguration"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">设置频率</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab7Content" class="form-card" style="display: none;">
+                <h3>⏰ 获取计划 (getCompositeSchedule)</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 周期 duration（秒）</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="duration" required  placeholder="请输入周期 duration（秒）: 必填"></div>
+                        </div>
+                    </div>
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_GET_COMPOSITE_SCHEDULE"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="getCompositeSchedule"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">获取计划</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab8Content" class="form-card" style="display: none;">
+                <h3>🔔 本地授权列表 （getLocalListVersion）</h3>
+                <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_GET_LOCAL_LIST_VERSION"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="getLocalListVersion"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">本地授权列表</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab9Content" class="form-card" style="display: none;">
+                <h3>📊 设置本地列表（sendLocalList）</h3>
+                 <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 更新类型</label>
+                        <div class="el-form-item__content" >
+                             <div class="el-select" style="width:60%">
+                                <select class="el-input__inner" name="updateType">
+                                    <option selected>Differential</option>
+                                    <option>Full</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 授权列表</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="localAuthorizationList" required  placeholder="请输入授权列表: 必填"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 授权版本号</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="listVersion" required  placeholder="请输入授权版本号: 必填"></div>
+                        </div>
+                    </div>
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="sendLocalList"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">设置本地列表</button>
+                    </div>
+                </form>
+
+            </div>
+            <div id="tab10Content" class="form-card" style="display: none;">
+                <h3>📁 Smart Charging</h3>
+                    <form class="el-form el-form--label-left">
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="connectorId">
+                                    <option selected>1</option>
+                                    <option>0</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 相位</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;">
+                                <div class="el-select" style="width:100%" >
+                                    <select class="el-input__inner" name="numberPhases">
+                                        <option selected>1</option>
+                                        <option>3</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">请求ID</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="cloudSmartStrategyParam.requestId"   value="0"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">请求Level</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="cloudSmartStrategyParam.level"   value="1"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">请求ActionType</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="cloudSmartStrategyParam.actionType"   value="charger.smart.strategy"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">预测时间点</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="cloudSmartStrategyParam.releaseVersion" ></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">策略第一个点</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="cloudSmartStrategyParam.forecastDate"></div>
+                        </div>
+                    </div>
+
+                                        <!-- 动态表格区域 -->
+                    <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 110px;">策略配置</label>
+                        <div class="el-form-item__content">
+                            <div class="dynamic-table-container">
+                                <table class="dynamic-table" id="timeParamsTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 25%">开始时间</th>
+                                            <th style="width: 25%">结束时间</th>
+                                            <th style="width: 20%">类型</th>
+                                            <th style="width: 20%">功率(kW)</th>
+                                            <th style="width: 10%">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                        <!-- 动态行会添加到这里 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="el-button el-button--small el-button--success add-row-btn" id="addRowBtn" style="margin-top: 12px; width: auto;">
+                                <i class="el-icon-plus"></i> 添加时间参数
+                            </button>
+                        </div>
+                    </div>
+
+
+                   <div class="el-form-item" style=" display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">signalName</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="ENJOYELEC_EVENT"></div>
+                        </div>
+                    </div>
+                    <div class="el-form-item" style="display: none;">
+                        <label class="el-form-item__label" style="width: 110px;">cmd</label>
+                        <div class="el-form-item__content">
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="cloudSmartStrategy"></div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="el-button el-button--primary save-btn">Smart Charging</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+    
+         /************start**************/
+
+         // 动态表格行ID计数器
+        var rowCounter = 0;
+        
+        // 类型选项
+        var typeOptions = ['EV_IDLE', 'EV_EVC'];
+        
+        // 添加新行
+        function addTableRow(startTime = '', endTime = '', type = '', value = '') {
+            var rowId = 'row_' + (++rowCounter);
+            var typeSelectHtml = '<select class="type-select" data-row-id="' + rowId + '">';
+            typeOptions.forEach(function(opt) {
+                var selected = (opt === type) ? 'selected' : '';
+                typeSelectHtml += '<option value="' + opt + '" ' + selected + '>' + opt + '</option>';
+            });
+            typeSelectHtml += '</select>';
+            
+            var newRow = `
+                <tr data-row-id="${rowId}">
+                    <td><input type="datetime-local" class="start-time" value="${startTime}" placeholder="开始时间"></td>
+                    <td><input type="datetime-local" class="end-time" value="${endTime}" placeholder="结束时间"></td>
+                    <td>${typeSelectHtml}</td>
+                    <td><input type="number" class="value-input" value="${value}" placeholder="请输入功率(kW)"></td>
+                    <td style="text-align:center"><button type="button" class="delete-row-btn" data-row-id="${rowId}">删除</button></td>
+                </tr>
+            `;
+            $('#tableBody').append(newRow);
+            
+            // 绑定删除按钮事件
+            $('.delete-row-btn[data-row-id="' + rowId + '"]').on('click', function() {
+                $(this).closest('tr').remove();
+            });
+        }
+        
+        // 获取所有表格行数据，返回数组
+        function getTableRowsData() {
+            var rowsData = [];
+            $('#tableBody tr').each(function() {
+                var $row = $(this);
+                var startTime = $row.find('.start-time').val();
+                var endTime = $row.find('.end-time').val();
+                var type = $row.find('.type-select').val();
+                var value = $row.find('.value-input').val();
+                value = value || 0
+                value = parseFloat(value);
+
+                if (startTime === undefined || startTime === '' || startTime === null || endTime === undefined || endTime === '' || endTime === null) {
+                     // 不记录数据
+                }else{
+                    // 转换为时间戳
+                    var startTimeTimestamp = convertToTimestamp(startTime);
+                    var endTimeTimestamp = convertToTimestamp(endTime);
+
+                    rowsData.push({
+                        startTime: startTimeTimestamp || '',
+                        endTime: endTimeTimestamp || '',
+                        strategy: type || '',
+                        params:{
+                            power: value || 0
+                        }
+                    });
+                }
+                
+            });
+            return rowsData;
+        }
+
+        // 将日期时间字符串转换为时间戳（毫秒）
+        function convertToTimestamp(dateTimeStr) {
+            if (!dateTimeStr) return 0;
+            try {
+                // 将 datetime-local 格式 "YYYY-MM-DDTHH:mm" 转换为时间戳
+                var date = new Date(dateTimeStr);
+                if (isNaN(date.getTime())) {
+                    return 0;
+                }
+                return date.getTime(); // 返回毫秒时间戳
+            } catch(e) {
+                console.error('时间转换错误:', e);
+                return 0;
+            }
+        }
+        
+        // 绑定添加行按钮事件
+        $('#addRowBtn').on('click', function() {
+            addTableRow('', '', 'EV_IDLE', '0');
+        });
+        
+        /************end**************/
+
+
+            // 定义所有标签页ID数组
+        var tabs = ['tab1', 'tab2', 'tab3', 'tab4', 'tab5', 'tab6', 'tab7', 'tab8', 'tab9', 'tab10'];
+
+        
+        // 切换内容的函数
+        function switchTab(tabId) {
+            $('.form-card').hide();
+            $('#' + tabId + 'Content').fadeIn(180);
+            
+            // 更新按钮样式
+            $('.sidebar .el-button').each(function() {
+                $(this).removeClass('el-button--primary').removeClass('is-plain');
+                if($(this).data('tab') === tabId) {
+                    $(this).addClass('el-button--primary').addClass('is-plain');
+                } else {
+                    $(this).addClass('is-plain');
+                }
+            });
+        }
+        
+        // 绑定左侧10个按钮的点击事件
+        $('.sidebar .el-button').on('click', function(e) {
+            var tabId = $(this).data('tab');
+            if(tabId && tabs.includes(tabId)) {
+                switchTab(tabId);
+            }
+        });
+        
+        // 获取当前活动表单的所有数据（返回JSON对象）
+        function getCurrentFormData() {
+            var currentTab = $('.form-card:visible');
+            var jsonData = {};
+            var params = {};
+            var cloudSmartStrategyParam = {};
+
+            var deviceSn = $('#deviceSnInput').val();
+            var vendorId = $('#vendorId').val();
+
+            jsonData.stationId =deviceSn;
+            jsonData['deviceId'] =deviceSn;
+            params['vendorId'] =vendorId;
+            params['deviceSn'] =deviceSn;
+            params['requestId'] =crypto.randomUUID();
+            
+            // 添加基本信息
+            var flag = 0;
+            var containCloudSmartStrategyParam = 0;
+            // 收集所有输入框、复选框、下拉框的值
+            currentTab.find('input, select, textarea').each(function() {
+                var $this = $(this);
+                var name = $this.attr('name');
+                
+                // 如果没有name属性，跳过
+                if (!name) return;
+                
+                var value = '';
+                
+                if ($this.is(':checkbox')) {
+                    value = $this.is(':checked');
+                } else if ($this.is('select')) {
+                    value = $this.find('option:selected').text();
+                } else {
+                    value = $this.val();
+                }
+
+                
+                // 处理特殊字段名，确保JSON键名规范
+                if (value !== undefined && value !== null && value !== '') {
+                    if(name === 'signalName') {
+                        jsonData['signalName'] = value;
+                    } else if (name.includes('cloudSmartStrategyParam')) {
+                        containCloudSmartStrategyParam = 1;
+                        const keys = name.split('.'); 
+                        cloudSmartStrategyParam[keys[1]] = value;
+                         // 添加动态表格数据
+                        
+                    } else {
+                        params[name] = value;
+                    }
+                }else {
+                    var required = $this.attr('required');
+                    if(required) {      
+                        flag = 1;          
+                    }
+                }
+            });
+
+            if(flag === 1) {
+                alert("必填项请填写");
+                return
+            }
+            if(containCloudSmartStrategyParam === 1) {
+               var cloudSmartStrategyParamData = getTableRowsData();
+                cloudSmartStrategyParam['data'] =  cloudSmartStrategyParamData;
+                var forecastDateValue = new Date().getTime()
+                if (cloudSmartStrategyParamData && cloudSmartStrategyParamData.length > 0) {
+                    var firstValue = cloudSmartStrategyParamData[0];
+                    forecastDateValue = firstValue.startTime
+                }
+                cloudSmartStrategyParam['releaseVersion'] = new Date().getTime()
+                cloudSmartStrategyParam['forecastDate'] = forecastDateValue
+                cloudSmartStrategyParam['requestId'] = crypto.randomUUID();
+                
+                params['cloudSmartStrategyParam'] = cloudSmartStrategyParam
+            }
+
+          
+
+            jsonData['params'] = params;
+            return jsonData;
+        }
+        
+        // 语法高亮JSON（简单的实现）
+        function syntaxHighlightJSON(json) {
+            var jsonStr = JSON.stringify(json, null, 2);
+            // 简单的语法高亮
+            jsonStr = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            jsonStr = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+                var cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                        match = match.slice(0, -1) + ':'; // 修复引号
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+            return jsonStr;
+        }
+        
+        // 显示弹出面板（JSON格式）
+        function showDataDialog(formData) {
+            var prettyJson = JSON.stringify(formData, null, 2);
+            var highlightedJson = syntaxHighlightJSON(formData);
+            
+            // 创建对话框的 HTML 结构
+            var dialogHtml = `
+                <div id="dataCopyDialog" class="el-dialog__wrapper" style="display: none;">
+                    <div class="el-dialog" style="width: 650px;">
+                        <div class="el-dialog__header">
+                            <span class="el-dialog__title">📋 配置数据 (JSON格式)</span>
+                            <button type="button" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button>
+                        </div>
+                        <div class="el-dialog__body">
+                            <div class="custom-dialog-content">
+                                <div style="margin-bottom: 12px; color: #606266; font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>📊 当前表单配置数据 (格式化JSON)</span>
+                                    <span style="font-size: 12px; color: #909399;">点击复制按钮将压缩为一行</span>
+                                </div>
+                                <div class="json-preview" id="jsonPreview">${highlightedJson}</div>
+                            </div>
+                        </div>
+                        <div class="el-dialog__footer">
+                            <div style="text-align: center;">
+                                <button type="button" class="el-button el-button--default" id="closeDialogBtn">关 闭</button>
+                                <button type="button" class="el-button el-button--primary" id="copyDataBtn">
+                                    <i class="el-icon-document-copy"></i> 复制压缩JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除已存在的对话框
+            $('#dataCopyDialog').remove();
+            $('body').append(dialogHtml);
+            
+            var $dialog = $('#dataCopyDialog');
+            $dialog.fadeIn(200);
+            
+            // 存储压缩后的JSON字符串
+            var compactJson = JSON.stringify(formData);
+            
+            // 关闭对话框的函数
+            function closeDialog() {
+                $dialog.fadeOut(200, function() {
+                    $(this).remove();
+                });
+            }
+            
+            // 绑定关闭事件
+            $('#closeDialogBtn, .el-dialog__headerbtn').on('click', closeDialog);
+            
+            // 点击遮罩层关闭
+            $dialog.on('click', function(e) {
+                if ($(e.target).hasClass('el-dialog__wrapper')) {
+                    closeDialog();
+                }
+            });
+            
+            // 复制功能（复制压缩后的一行JSON）
+            $('#copyDataBtn').on('click', function() {
+                // 复制压缩后的一行JSON
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(compactJson).then(function() {
+                        // 复制成功提示
+                        if (window.ELEMENT && window.ELEMENT.Message) {
+                            window.ELEMENT.Message.success({
+                                message: '✅ JSON数据已压缩并复制到剪贴板！',
+                                duration: 1500
+                            });
+                        } else {
+                            alert('JSON数据已压缩并复制到剪贴板！');
+                        }
+                        // 关闭面板
+                        closeDialog();
+                    }).catch(function() {
+                        // 降级方案
+                        fallbackCopy(compactJson, closeDialog);
+                    });
+                } else {
+                    // 降级方案
+                    fallbackCopy(compactJson, closeDialog);
+                }
+            });
+        }
+        
+        // 降级复制方案（使用 textarea）
+        function fallbackCopy(text, callback) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            var success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                success = false;
+            }
+            document.body.removeChild(textarea);
+            
+            if (success) {
+                if (window.ELEMENT && window.ELEMENT.Message) {
+                    window.ELEMENT.Message.success({
+                        message: '✅ JSON数据已压缩并复制到剪贴板！',
+                        duration: 1500
+                    });
+                } else {
+                    alert('JSON数据已压缩并复制到剪贴板！');
+                }
+                if (callback) callback();
+            } else {
+                if (window.ELEMENT && window.ELEMENT.Message) {
+                    window.ELEMENT.Message.error({
+                        message: '❌ 复制失败，请手动复制',
+                        duration: 2000
+                    });
+                } else {
+                    alert('复制失败，请手动选择文本复制');
+                }
+            }
+        }
+        
+        // 处理所有保存按钮的点击事件
+        $(document).on('click', '.save-btn', function(e) {
+            e.preventDefault();
+            
+            // 获取当前表单数据（JSON对象）
+            var formData = getCurrentFormData();
+            
+            // 检查是否有有效数据（至少包含表单名称和设备SN）
+            if (Object.keys(formData).length <= 3) { // 只有 form_name, device_sn, timestamp
+                if (window.ELEMENT && window.ELEMENT.Message) {
+                    window.ELEMENT.Message.warning({
+                        message: '当前表单暂无配置数据',
+                        duration: 1500
+                    });
+                }
+                return;
+            }
+            
+            // 显示弹出面板
+            showDataDialog(formData);
+        });
+        
+        // 取消/重置按钮的提示效果（仅演示）
+        $(document).on('click', '.cancel-btn', function(e) {
+            e.preventDefault();
+            var btnText = $(this).text().trim() || "操作";
+            if (window.ELEMENT && window.ELEMENT.Message) {
+                window.ELEMENT.Message.info({
+                    message: '点击了 "' + btnText + '" 按钮 (演示模式)',
+                    duration: 1200
+                });
+            } else {
+                alert('演示: ' + btnText);
+            }
+        });
+        
+        // 设置默认激活第一个tab
+        switchTab('tab1');
+        
+        console.log("页面已加载完成 - 点击保存按钮会弹出JSON格式面板，复制时会压缩为一行JSON并自动关闭");
+    });
+</script>
+</body>
+</html>
