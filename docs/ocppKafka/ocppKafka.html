@@ -869,7 +869,7 @@
 
             <!-- 还需要开发--->
             <div id="tab12Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 预约 Reserve Now</h3>
                 <form class="el-form el-form--label-left">
                     <div class="el-form-item" >
                         <label class="el-form-item__label" style="width: 20%;">枪ID</label>
@@ -882,16 +882,44 @@
                             </div>
                         </div>
                     </div>
+                    <!-- reservationId int-->
+                    <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 预约Id</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="reservationId" required ></div>
+                        </div>
+                    </div>
+                    <!-- idTag -->
+                    <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 预约idTag</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="idTag" required ></div>
+                        </div>
+                    </div>
+                    <!-- expiryDate -->
+                     <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 预约 expiryDate</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="expiryDate" required ></div>
+                        </div>
+                    </div>
+                    <!-- parentIdTag -->
+                     <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 20%;"> 预约 parentIdTag</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="parentIdTag" ></div>
+                        </div>
+                    </div>
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="reserveNow"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -901,7 +929,7 @@
             </div>
 
              <div id="tab13Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 取消预约 Cancel Reservation</h3>
                 <form class="el-form el-form--label-left">
                     <div class="el-form-item" >
                         <label class="el-form-item__label" style="width: 20%;">枪ID</label>
@@ -914,16 +942,23 @@
                             </div>
                         </div>
                     </div>
+                       <!-- reservationId int-->
+                    <div class="el-form-item">
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 预约Id</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="reservationId" required ></div>
+                        </div>
+                    </div>
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="cancelReservation"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -933,29 +968,32 @@
             </div>
 
              <div id="tab14Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 重置 Reset</h3>
                 <form class="el-form el-form--label-left">
-                    <div class="el-form-item" >
-                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">重置类型</label>
                         <div class="el-form-item__content" >
                             <div class="el-select" style="width:30%">
-                                <select class="el-input__inner" name="connectorId">
-                                    <option selected value="1">1</option>
-                                    <option value="0">0</option>
+                                <select class="el-input__inner" name="resetType">
+                                    <option selected value="1">Hard</option>
+                                    <option value="0">Soft</option>
                                 </select>
                             </div>
                         </div>
                     </div>
+
+                    
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="reset"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -965,29 +1003,19 @@
             </div>
 
              <div id="tab15Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 清除缓存 Clear Cache</h3>
                 <form class="el-form el-form--label-left">
-                    <div class="el-form-item" >
-                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
-                        <div class="el-form-item__content" >
-                            <div class="el-select" style="width:30%">
-                                <select class="el-input__inner" name="connectorId">
-                                    <option selected value="1">1</option>
-                                    <option value="0">0</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="clearCache"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -997,7 +1025,7 @@
             </div>
 
              <div id="tab16Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 清除配置 clearChargingProfile</h3>
                 <form class="el-form el-form--label-left">
                     <div class="el-form-item" >
                         <label class="el-form-item__label" style="width: 20%;">枪ID</label>
@@ -1010,16 +1038,28 @@
                             </div>
                         </div>
                     </div>
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">配置类型</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="profileType">
+                                    <option selected value="ChargePointMaxProfile">ChargePointMaxProfile</option>
+                                    <option value="TxDefaultProfile">TxDefaultProfile</option>
+                                    <option value="TxProfile">TxProfile</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="clearChargingProfile"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -1029,7 +1069,7 @@
             </div>
 
              <div id="tab17Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 解锁 unlock</h3>
                 <form class="el-form el-form--label-left">
                     <div class="el-form-item" >
                         <label class="el-form-item__label" style="width: 20%;">枪ID</label>
@@ -1045,13 +1085,13 @@
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="unlock"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -1061,7 +1101,7 @@
             </div>
 
              <div id="tab18Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 可用性 Change Availability</h3>
                 <form class="el-form el-form--label-left">
                     <div class="el-form-item" >
                         <label class="el-form-item__label" style="width: 20%;">枪ID</label>
@@ -1074,16 +1114,29 @@
                             </div>
                         </div>
                     </div>
+                    <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">可用性</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-select" style="width:30%">
+                                <select class="el-input__inner" name="availabilityStatus">
+                                    <option selected value="1">可用</option>
+                                    <option value="0">不可用</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_SET_PROPERTY"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="available"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -1093,29 +1146,54 @@
             </div>
 
              <div id="tab19Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 获取诊断信息 Get Diagnostics</h3>
                 <form class="el-form el-form--label-left">
-                    <div class="el-form-item" >
-                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                    <!-- location -->
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 上报地址</label>
                         <div class="el-form-item__content" >
-                            <div class="el-select" style="width:30%">
-                                <select class="el-input__inner" name="connectorId">
-                                    <option selected value="1">1</option>
-                                    <option value="0">0</option>
-                                </select>
-                            </div>
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="location"   required></div>
                         </div>
                     </div>
+                    <!-- retries -->
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">重试次数</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="retries"   ></div>
+                        </div>
+                    </div>
+                    <!-- retryInterval -->
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">重试间隔</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="number" class="el-input__inner" name="retryInterval"   ></div>
+                        </div>
+                    </div>
+                    <!-- startTime -->
+                      <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">开始时间</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="startTime"   ></div>
+                        </div>
+                    </div>
+                    <!-- stopTime -->
+                      <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;">结束时间</label>
+                        <div class="el-form-item__content" >
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="stopTime"   ></div>
+                        </div>
+                    </div>
+
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="CHARGER_GET_DIAGNOSTICS"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="getDiagnostics"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
@@ -1125,29 +1203,26 @@
             </div>
 
              <div id="tab20Content" class="form-card" style="display: none;">
-                <h3>📋 待开发</h3>
+                <h3>📋 OTA升级 Update Firmware</h3>
                 <form class="el-form el-form--label-left">
-                    <div class="el-form-item" >
-                        <label class="el-form-item__label" style="width: 20%;">枪ID</label>
+                     <!-- location -->
+                     <div class="el-form-item" >
+                        <label class="el-form-item__label" style="width: 20%;color: red;">☆ 固件地址</label>
                         <div class="el-form-item__content" >
-                            <div class="el-select" style="width:30%">
-                                <select class="el-input__inner" name="connectorId">
-                                    <option selected value="1">1</option>
-                                    <option value="0">0</option>
-                                </select>
-                            </div>
+                            <div class="el-input" style="width: 60%;"><input type="text" class="el-input__inner" name="firmwareUrl"   required></div>
                         </div>
                     </div>
+
                    <div class="el-form-item" style=" display: none;">
                         <label class="el-form-item__label" style="width: 110px;">signalName</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="QUERY_EVENT"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="signalName"  value="OTA_UPGRADE"></div>
                         </div>
                     </div>
                     <div class="el-form-item" style="display: none;">
                         <label class="el-form-item__label" style="width: 110px;">cmd</label>
                         <div class="el-form-item__content">
-                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="queryEvent"></div>
+                            <div class="el-input"><input type="text" class="el-input__inner" name="cmd"  value="OTA_UPGRADE"></div>
                         </div>
                     </div>
                     <div class="action-buttons">
