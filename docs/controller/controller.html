@@ -558,6 +558,14 @@
                                 <option value="1">开</option>
                             </select>
                         </div>
+                          <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac power</label>
+                            <input type="text" class="form-control" id="hvacHaierPower" placeholder="">
+                        </div>
+                         <div class="form-group col-md-6">
+                            <label for="inputEmail4">Hvac cop</label>
+                            <input type="text" class="form-control" id="hvacHaierCop" placeholder="">
+                        </div>
                         <div class="form-group col-md-6">
                             <label for="inputEmail4">Hvac 配置json文件</label>
                             <!-- <input type="text" class="form-control" id="hvacJson" placeholder=""> -->
@@ -1010,13 +1018,22 @@
             var hvacJson = $("#hvacJson").val()
             var hvacSwitchOpen = $("#hvacSwitchOpen").val()
             var snHvacHaier = $("#snHvacHaier").val()
-            
+             var power = $("#hvacHaierPower").val()
+              var cop = $("#hvacHaierCop").val()
             
             var dataXml = '';
             var obj = new Object();
             if (hvacSwitchOpen) {
                 dataXml += createString('switchOpen', hvacSwitchOpen);
                 obj.hvacSwitchOpen = hvacSwitchOpen;
+            }
+            if(power) {
+                dataXml += createString('powerReal', power);
+                obj.power = power;
+            }
+             if(cop) {
+                dataXml += createString('cop', cop);
+                obj.cop = cop;
             }
             if (hvacJson) {
                 dataXml += createString('zone', hvacJson);
