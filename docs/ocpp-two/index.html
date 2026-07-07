@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <title>OCPP 2.1 标准协议模拟器</title>
+
+    <style>
+        .row { margin-top: 15px; }
+        .section-box { border: 1px solid #ccc; padding: 12px; border-radius: 4px; margin-top: 10px; }
+        .section-title { font-weight: bold; margin-bottom: 8px; color: #333; }
+        .log-send { color: #007bff; }
+        .log-recv { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-entry { padding: 4px 8px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 13px; word-break: break-all; }
+    </style>
+</head>
+
+<body>
+
+    <div style="padding:3%;">
+
+        <h4>OCPP 2.1 充电桩模拟器</h4>
+        <hr>
+
+        <div class="row" style="width: 100%;">
+            <div class="col-4">
+                <!-- 设备连接信息 -->
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <label for="wsUrlInput">WebSocket 地址</label>
+                        <input type="text" class="form-control" id="wsUrlInput"
+                            value="ws://123.60.71.156:64584/3001738232890273" placeholder="ws://localhost:8088/1000">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="deviceSn">设备SN号</label>
+                        <input type="text" class="form-control" id="deviceSn" value="3001738232890273">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="deviceBrand">设备品牌</label>
+                        <input type="text" class="form-control" id="deviceBrand" required value="IoTecha">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="deviceModel">设备型号</label>
+                        <input type="text" class="form-control" id="deviceModel" required value="CC">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="deviceVersion">设备版本号</label>
+                        <input type="text" class="form-control" id="deviceVersion" value="2.1.0">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button id="connectBtn" onclick="toggleWebSocketConnection()"
+                            class="btn btn-primary">设备接入</button>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <button onclick="clearLog()" class="btn btn-danger">清除日志</button>
+                    </div>
+                </div>
+
+                <!-- 控制界面 -->
+                <div id="sendContentDiv">
+
+                    <!-- 基础操作 -->
+                    <div class="section-box">
+                        <div class="section-title">基础操作</div>
+                        <button onclick="sendHeart()" id='sendHeart' class="btn btn-outline-primary btn-sm">开启心跳</button>
+                        <button onclick="bootNotification()" class="btn btn-outline-primary btn-sm">注册设备</button>
+                        <button onclick="authorize()" class="btn btn-outline-primary btn-sm">授权</button>
+                    </div>
+
+                    <!-- 交易控制 -->
+                    <div class="section-box">
+                        <div class="section-title">交易控制</div>
+                        <button onclick="startTransaction()" id='startTransaction'
+                            class="btn btn-outline-success btn-sm">本地开启充电</button>
+                        <button onclick="stopTransaction()" id='stopTransaction'
+                            class="btn btn-outline-warning btn-sm">本地关闭充电</button>
+                        <button onclick="notifyEVChargingNeeds()" id='notifyEVChargingNeeds'
+                            class="btn btn-outline-info btn-sm">V2X参数上报</button>
+                    </div>
+
+                    <!-- 状态通知 -->
+                    <div class="section-box">
+                        <div class="section-title">状态通知</div>
+                        <div class="input-group input-group-sm">
+                            <select class="form-control" id="statusNotification">
+                                <option value="Available">Available</option>
+                                <option value="Occupied">Occupied</option>
+                                <option value="Reserved">Reserved</option>
+                                <option value="Unavailable">Unavailable</option>
+                                <option value="Faulted">Faulted</option>
+                                <option value="Charging">Charging</option>
+                                <option value="SuspendedEV">SuspendedEV</option>
+                                <option value="SuspendedEVSE">SuspendedEVSE</option>
+                                <option value="Finishing">Finishing</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button onclick="statusNotification()" class="btn btn-outline-primary btn-sm">上报状态</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 计量数据上报 -->
+                    <div class="section-box">
+                        <div class="section-title">计量数据</div>
+                        <div class="row" style="margin-top:0;">
+                            <div class="form-group col-md-6">
+                                <label for="currentPower" class="small">实时功率 (W)</label>
+                                <input type="number" class="form-control form-control-sm" id="currentPower" placeholder="默认 5000">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="importEnergy" class="small">充电电量 (Wh)</label>
+                                <input type="number" class="form-control form-control-sm" id="importEnergy" placeholder="追加到已有电量">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="exportCurrentPower" class="small">放电功率 (W)</label>
+                                <input type="number" class="form-control form-control-sm" id="exportCurrentPower" placeholder="默认 0">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="exportEnergy" class="small">放电电量 (Wh)</label>
+                                <input type="number" class="form-control form-control-sm" id="exportEnergy" placeholder="放电电量">
+                            </div>
+                        </div>
+                        <button onclick="meterValues()" class="btn btn-outline-primary btn-sm btn-block">上报计量数据</button>
+                    </div>
+
+                    <!-- 手动停止充电 -->
+                    <div class="section-box">
+                        <div class="section-title">手动停止充电</div>
+                        <div class="row" style="margin-top:0;">
+                            <div class="form-group col-md-4">
+                                <label for="manualTransactionId" class="small">事务 ID</label>
+                                <input type="text" class="form-control form-control-sm" id="manualTransactionId" placeholder="事务 ID">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="manualImportEnergy" class="small">充电电量 (Wh)</label>
+                                <input type="number" class="form-control form-control-sm" id="manualImportEnergy" placeholder="充电电量">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="manualExportEnergy" class="small">放电电量 (Wh)</label>
+                                <input type="number" class="form-control form-control-sm" id="manualExportEnergy" placeholder="放电电量">
+                            </div>
+                        </div>
+                        <button onclick="manualStopTransaction()" class="btn btn-outline-danger btn-sm btn-block">手动停止充电</button>
+                    </div>
+
+                    <!-- 自定义消息 -->
+                    <div class="section-box">
+                        <div class="section-title">自定义消息</div>
+                        <textarea id="message" rows="3" class="form-control form-control-sm" placeholder="输入 OCPP 2.1 JSON 消息"></textarea>
+                        <button onclick="sendMessage()" class="btn btn-outline-secondary btn-sm btn-block" style="margin-top:6px;">发送</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-8">
+                <!-- 日志输出界面 -->
+                <div style="font-weight:bold; margin-bottom:4px;">通信日志</div>
+                <div id="messageDiv" class="overflow-auto"
+                    style="min-height: 400px; width: 100%; height: 80%; border: 1px solid #ddd; background: #fafafa; border-radius: 4px;">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========== 核心脚本 ========== -->
+    <script>
+
+        // ------ 初始化 ------
+        const screenHeight = window.innerHeight - 200;
+        const myDiv = document.getElementById('messageDiv');
+        myDiv.style.maxHeight = `${screenHeight}px`;
+
+        var socket;
+
+        function toggleWebSocketConnection() {
+            if (!socket || socket.readyState === WebSocket.CLOSED) {
+                connectWebSocket();
+            } else {
+                disconnectWebSocket();
+            }
+        }
+
+        function checkConnect() {
+            var deviceBrand = $("#deviceBrand").val();
+            var deviceModel = $("#deviceModel").val();
+            if (!deviceBrand || !deviceModel) {
+                alertMsg("品牌、型号必填");
+                return false;
+            }
+            return true;
+        }
+
+        function enableRegisterText(flag) {
+            $('#wsUrlInput').prop('disabled', flag);
+            $('#deviceSn').prop('disabled', flag);
+            $('#deviceBrand').prop('disabled', flag);
+            $('#deviceModel').prop('disabled', flag);
+            $('#deviceVersion').prop('disabled', flag);
+            if (!flag) {
+                transactionId = null;
+                startUuid = null;
+                stopHeart();
+                $("#importEnergy").val("");
+                $("#currentPower").val("");
+                $("#exportCurrentPower").val("");
+                $("#exportEnergy").val("");
+                $("#sendContentDiv").hide();
+            }
+        }
+
+    </script>
+
+    <!-- ========== 指令相关 ========== -->
+    <script>
+
+        // ------ 心跳 ------
+        var heartTime = null;
+        function startHeart(interval) {
+            interval = interval ? interval : 45;
+            heartTime = setInterval(() => {
+                var message = '[2,"' + generateUUID() + '","Heartbeat",{}]';
+                sendSocketMessage(message);
+            }, interval * 1000);
+            $("#sendHeart").text("停止心跳");
+            $("#sendHeart").removeClass("btn-outline-primary").addClass("btn-outline-danger");
+        }
+
+        function stopHeart() {
+            if (heartTime) {
+                clearInterval(heartTime);
+                heartTime = null;
+            }
+            $("#sendHeart").text("开启心跳");
+            $("#sendHeart").removeClass("btn-outline-danger").addClass("btn-outline-primary");
+        }
+
+        function sendHeart() {
+            if (heartTime) { stopHeart(); return; }
+            startHeart(45);
+        }
+
+        // ------ 设备注册 (BootNotification) ------
+        function bootNotification() {
+            var deviceVersion = $("#deviceVersion").val() || '';
+            var deviceSn = $("#deviceSn").val() || '';
+            var brand = $("#deviceBrand").val();
+            var model = $("#deviceModel").val();
+            // OCPP 2.1 BootNotification: chargingStation 对象, camelCase
+            var payload = {
+                reason: "PowerUp",
+                chargingStation: {
+                    vendorName: brand,
+                    model: model,
+                    serialNumber: deviceSn,
+                    firmwareVersion: deviceVersion,
+                    modem: {
+                        iccid: "",
+                        imsi: ""
+                    }
+                }
+            };
+            var message = '[2,"' + generateUUID() + '","BootNotification",' + JSON.stringify(payload) + ']';
+            sendSocketMessage(message);
+        }
+
+        // ------ 授权 (Authorize) ------
+        function authorize() {
+            var payload = {
+                idToken: {
+                    idToken: "RFID-ABCD1234",
+                    type: "ISO14443"
+                },
+                evseId: 1
+            };
+            var message = '[2,"' + generateUUID() + '","Authorize",' + JSON.stringify(payload) + ']';
+            sendSocketMessage(message);
+        }
+
+        // ------ 状态通知 (StatusNotification) ------
+        function statusNotification() {
+            var statusValue = $("#statusNotification").val();
+
+    
+            // 通过什么状态上报
+            if (statusValue === 'Charging' || statusValue === 'SuspendedEV' ||statusValue === 'SuspendedEVSE' || statusValue === 'Finishing') {
+                var payload = {
+                    eventType: "Updated",
+                    timestamp: formatTime(),
+                    triggerReason: "MeterValuePeriodic",
+                    seqNo: 0,
+                    transactionInfo: {
+                        transactionId: transactionId?transactionId:"-1",
+                        chargingState: statusValue === 'Finishing'?'EVConnected':statusValue
+                    },
+                    evse: {
+                        id: 1,
+                        connectorId: 1
+                    }
+                };
+                var message = '[2,"' + generateUUID() + '","TransactionEvent",' + JSON.stringify(payload) + ']';
+                sendSocketMessage(message);
+                return
+            }
+
+            // OCPP 2.1: camelCase, 加 timestamp 和 evseId
+            var payload = {
+                timestamp: formatTime(),
+                connectorStatus: statusValue,
+                evseId: 1,
+                connectorId: 1
+            };
+            var message = '[2,"' + generateUUID() + '","StatusNotification",' + JSON.stringify(payload) + ']';
+
+             var NotifyEventRequestPayload = {
+                generatedAt: formatTime(),
+                seqNo: 0,
+                eventData: [
+                    {
+                        eventId: 1001,
+                        timestamp: formatTime(),
+                        trigger: "Alerting",
+                        actualValue:statusValue,
+                        techCode: "OVERCURRENT",
+                        techInfo: "Current exceeded threshold",
+                        cleared: false,
+                        eventNotificationType: "CustomMonitor",
+                        component: {
+                            name: "CONNECTOR",
+                            instance: "1",
+                            evse: {
+                                id: 1,
+                                connectorId: 1
+                            }
+                        },
+                        variable:{
+                            name:statusValue
+                        } 
+                    }
+                ]
+            };
+            var message2 = '[2,"' + generateUUID() + '","NotifyEvent",' + JSON.stringify(NotifyEventRequestPayload) + ']';
+
+            sendSocketMessage(message);
+            sendSocketMessage(message2);
+        }
+
+        // ------ V2X 参数上报 ------
+        function notifyEVChargingNeeds() {
+            var payload = {
+                chargingNeeds: {
+                    controlMode: "ScheduledControl",
+                    departureTime: formatTime(),
+                    mobilityNeedsMode: "EVCC",
+                    requestedEnergyTransfer: "AC_single_phase",
+                    v2xChargingParameters: {
+                        evMaxEnergyRequest: 25200,
+                        evMinEnergyRequest: 13400,
+                        evTargetEnergyRequest: 2800,
+                        maxChargePower: 11000,
+                        maxDischargePower: 11000,
+                        minChargePower: 0,
+                        minDischargePower: 0,
+                        evMinV2XEnergyRequest: 100,
+                        evMaxV2XEnergyRequest: 24900
+                    }
+                },
+                evseId: 1,
+                timestamp: formatTime()
+            };
+            var message = '[2,"' + generateUUID() + '","NotifyEVChargingNeeds",' + JSON.stringify(payload) + ']';
+            sendSocketMessage(message);
+        }
+
+        // ------ 交易 ------
+        var transactionId = null;
+        var startUuid = null;
+        var seqNoCounter = 0;
+
+        // 手动停止充电
+        function manualStopTransaction() {
+            var manualTxnId = $("#manualTransactionId").val();
+            if (!manualTxnId) {
+                alertMsg("请输入事务ID，从通讯中获取或订单中获取");
+                return;
+            }
+
+            var manualExportEnergy = $("#manualExportEnergy").val();
+            if (manualExportEnergy) {
+                var mvPayload = {
+                    evseId: 1,
+                    meterValue: [{
+                        timestamp: formatTime(),
+                        sampledValue: [{
+                            context: "Transaction.End",
+                            measurand: "Energy.Active.Export.Register",
+                            unit: "Wh",
+                            value: manualExportEnergy,
+                            location: "Outlet"
+                        }]
+                    }]
+                };
+                var mvMsg = '[2,"' + generateUUID() + '","MeterValues",' + JSON.stringify(mvPayload) + ']';
+                sendSocketMessage(mvMsg);
+            }
+
+            var manualImportEnergy = $("#manualImportEnergy").val() || '';
+            // OCPP 2.1: TransactionEvent (Ended) 替代 StopTransaction
+            var payload = {
+                eventType: "Ended",
+                timestamp: formatTime(),
+                triggerReason: "StopAuthorized",
+                seqNo: ++seqNoCounter,
+                transactionInfo: {
+                    transactionId: manualTxnId
+                },
+                evse: {
+                    id: 1,
+                    connectorId: 1
+                },
+                meterValue: manualImportEnergy ? [{
+                    timestamp: formatTime(),
+                    sampledValue: [{
+                        context: "Transaction.End",
+                        measurand: "Energy.Active.Import.Register",
+                        unit: "Wh",
+                        value: manualImportEnergy,
+                        location: "Outlet"
+                    }]
+                }] : undefined
+            };
+            // 移除 undefined 字段
+            var message = '[2,"' + generateUUID() + '","TransactionEvent",' + JSON.stringify(payload) + ']';
+            transactionId = null;
+            startUuid = null;
+            seqNoCounter = 0;
+            clearOrderInfo();
+            sendSocketMessage(message);
+            $("#statusNotification").val("Finishing");
+            statusNotification();
+        }
+
+        // 本地关闭充电
+        function stopTransaction() {
+            if (transactionId) {
+                var energy = getOrderInfo(transactionId);
+                var payload = {
+                    eventType: "Ended",
+                    timestamp: formatTime(),
+                    triggerReason: "StopAuthorized",
+                    seqNo: ++seqNoCounter,
+                    transactionInfo: {
+                        transactionId: transactionId
+                    },
+                    evse: {
+                        id: 1,
+                        connectorId: 1
+                    },
+                    meterValue: [{
+                        timestamp: formatTime(),
+                        sampledValue: [{
+                            context: "Transaction.End",
+                            measurand: "Energy.Active.Import.Register",
+                            unit: "Wh",
+                            value: String(energy),
+                            location: "Outlet"
+                        }]
+                    }]
+                };
+                var message = '[2,"' + generateUUID() + '","TransactionEvent",' + JSON.stringify(payload) + ']';
+                transactionId = null;
+                startUuid = null;
+                seqNoCounter = 0;
+                clearOrderInfo();
+                sendSocketMessage(message);
+                $("#statusNotification").val("Finishing");
+                statusNotification();
+                return;
+            }
+            alertMsg("桩目前没有正在充电");
+        }
+
+        // 本地开启充电
+        function startTransaction() {
+            if (startUuid) {
+                alertMsg("桩目前正在充电");
+                return;
+            }
+            startUuid = Math.floor(Date.now() / 1000);
+            transactionId = startUuid;
+            seqNoCounter = 1;
+            // OCPP 2.1: TransactionEvent (Started) 替代 StartTransaction
+            var payload = {
+                eventType: "Started",
+                timestamp: formatTime(),
+                triggerReason: "CablePluggedIn",
+                seqNo: seqNoCounter,
+                transactionInfo: {
+                    transactionId: startUuid
+                },
+                idToken: {
+                    idToken: "RFID-ABCD1234",
+                    type: "ISO14443"
+                },
+                evse: {
+                    id: 1,
+                    connectorId: 1
+                },
+                meterValue: [{
+                    timestamp: formatTime(),
+                    sampledValue: [{
+                        context: "Transaction.Begin",
+                        measurand: "Energy.Active.Import.Register",
+                        unitOfMeasure: {
+                            "unit":"Wh"
+                        },
+                        value: 0.0,
+                        location: "Outlet"
+                    }]
+                }]
+            };
+            var message = '[2,"' + startUuid + '","TransactionEvent",' + JSON.stringify(payload) + ']';
+            sendSocketMessage(message);
+            setOrderInfo(transactionId,  "0",  "0");
+        }
+
+        // 上报计量数据
+        function meterValues() {
+            var currentPower = $("#currentPower").val() || "5000";
+            var exportCurrentPower = $("#exportCurrentPower").val() || "0";
+            var importEnergy = $("#importEnergy").val() || "";
+            var exportEnergy = $("#exportEnergy").val() || "";
+
+            var accumulatedImportEnergy = Number(getOrderInfo(transactionId)) + Number(importEnergy || 0);
+
+            var sampledValues = [];
+
+            if (importEnergy) {
+                sampledValues.push({
+                    context: "Sample.Periodic",
+                    measurand: "Energy.Active.Import.Register",
+                    unit: "Wh",
+                    value: String(accumulatedImportEnergy),
+                    location: "Outlet"
+                });
+            }
+            sampledValues.push({
+                context: "Sample.Periodic",
+                measurand: "Power.Active.Import",
+                unit: "W",
+                value: currentPower,
+                location: "Outlet"
+            });
+            if (exportEnergy) {
+                sampledValues.push({
+                    context: "Sample.Periodic",
+                    measurand: "Energy.Active.Export.Register",
+                    unit: "Wh",
+                    value: exportEnergy,
+                    location: "Outlet"
+                });
+            }
+            sampledValues.push({
+                context: "Sample.Periodic",
+                measurand: "Power.Active.Export",
+                unit: "W",
+                value: exportCurrentPower,
+                location: "Outlet"
+            });
+
+            var payload = {
+                evseId: 1,
+                meterValue: [{
+                    timestamp: formatTime(),
+                    sampledValue: sampledValues
+                }]
+            };
+
+            if (transactionId) {
+                payload.transactionId = transactionId;
+                setOrderInfo(transactionId, currentPower, importEnergy || "0");
+            }
+
+            var message = '[2,"' + generateUUID() + '","MeterValues",' + JSON.stringify(payload) + ']';
+            sendSocketMessage(message);
+        }
+
+    </script>
+
+    <!-- ========== 服务器消息处理 ========== -->
+    <script>
+
+        function handlerMessage(message) {
+            messageDiv("recv", message);
+
+            var jsonArray = JSON.parse(message);
+            var uuid = jsonArray[1];
+            var key = jsonArray[0];
+            var cmd = jsonArray[2];
+
+            // ---- CSMS 下发的 CALL (messageTypeId=2) ----
+
+            // RequestStartTransaction (2.1 替代 RemoteStartTransaction)
+            if (cmd === 'RequestStartTransaction') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                startTransaction();
+                return;
+            }
+
+            // RequestStopTransaction (2.1 替代 RemoteStopTransaction)
+            if (cmd === 'RequestStopTransaction') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                stopTransaction();
+                return;
+            }
+
+            // SetChargingProfile
+            if (cmd === 'SetChargingProfile') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // ClearChargingProfile
+            if (cmd === 'ClearChargingProfile') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // SetVariables (2.1 替代 ChangeConfiguration)
+            if (cmd === 'SetVariables') {
+                var response = '[3,"' + uuid + '",{"setVariableResult":[{"attributeStatus":"Accepted","component":{"name":"Controller","instance":""},"variable":{"name":"HeartbeatInterval","instance":""}}]}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // UnlockConnector
+            if (cmd === 'UnlockConnector') {
+                var response = '[3,"' + uuid + '",{"status":"Unlocked"}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // TriggerMessage
+            if (cmd === 'TriggerMessage') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+
+                var event = jsonArray[3].requestedMessage;
+                if (event === 'StatusNotification') {
+                    statusNotification();
+                }
+                if (event === 'MeterValues') {
+                    // meterValues();
+                }
+                return;
+            }
+
+            // GetVariables (2.1 替代 GetConfiguration)
+            if (cmd === 'GetVariables') {
+                var response = '[3,"' + uuid + '",{"getVariableResult":[{"attributeStatus":"Accepted","component":{"name":"Controller","instance":""},"variable":{"name":"HeartbeatInterval","instance":""},"attributeValue":"90"},{"attributeStatus":"Accepted","component":{"name":"Controller","instance":""},"variable":{"name":"SupportedFeatureProfiles","instance":""},"attributeValue":"Core,FirmwareManagement,LocalAuthListManagement,Reservation,SmartCharging,RemoteTrigger"}]}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // Reset
+            if (cmd === 'Reset') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // GetBaseReport
+            if (cmd === 'GetBaseReport') {
+                var response = '[3,"' + uuid + '",{"status":"Accepted"}]';
+                sendSocketMessage(response);
+                return;
+            }
+
+            // ---- CALLRESULT (messageTypeId=3) 响应 ----
+            if (key === 3 && startUuid && uuid === startUuid) {
+                // 处理启动充电的响应，提取 transactionId
+                var payload = jsonArray[2];
+                if (payload && payload.transactionInfo && payload.transactionInfo.transactionId) {
+                    transactionId = payload.transactionInfo.transactionId;
+                }
+                $("#statusNotification").val("Charging");
+                statusNotification();
+            }
+
+            // ---- CALLERROR (messageTypeId=4) 错误响应 ----
+            if (key === 4) {
+                var errorCode = jsonArray[2];
+                var errorDesc = jsonArray[3];
+                messageDiv("error", "ERROR [" + errorCode + "]: " + errorDesc);
+            }
+        }
+
+    </script>
+
+    <!-- ========== WebSocket 连接管理 ========== -->
+    <script>
+
+        $("#sendContentDiv").hide();
+
+        function connectWebSocket() {
+            var wsUrl = $("#wsUrlInput").val();
+            if (!wsUrl) {
+                alertMsg("请输入 WebSocket 地址");
+                return;
+            }
+
+            if (!checkConnect()) { return; }
+
+            try {
+                // OCPP 2.x 子协议
+                socket = new WebSocket(wsUrl, [ 'ocpp2.1','ocpp2.0.1']);
+            } catch (error) {
+                alertMsg('WebSocket 连接失败: ' + error.message);
+                return;
+            }
+
+            socket.onopen = function (event) {
+                messageDiv("send", "WebSocket 已连接 (OCPP 2.1)");
+                updateButtonState(true);
+            };
+
+            socket.onmessage = function (event) {
+                handlerMessage(event.data);
+            };
+
+            socket.onclose = function (event) {
+                messageDiv("send", "WebSocket 连接已关闭 (code: " + event.code + ")");
+                updateButtonState(false);
+            };
+
+            socket.onerror = function (error) {
+                messageDiv("error", "WebSocket 错误");
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (socket) {
+                socket.close();
+                messageDiv("send", "手动断开 WebSocket 连接");
+            }
+        }
+
+        function updateButtonState(connected) {
+            if (connected) {
+                $("#connectBtn").text('断开连接');
+                $("#connectBtn").removeClass("btn btn-primary").addClass("btn btn-danger");
+                $("#sendContentDiv").show();
+                startHeart(45);
+                enableRegisterText(true);
+            } else {
+                $("#connectBtn").text('设备接入');
+                $("#connectBtn").removeClass("btn btn-danger").addClass("btn btn-primary");
+                $("#sendContentDiv").hide();
+                stopHeart();
+                enableRegisterText(false);
+            }
+        }
+
+        function sendMessage() {
+            var message = $("#message").val();
+            sendSocketMessage(message);
+        }
+
+    </script>
+
+    <!-- ========== 工具函数 ========== -->
+    <script>
+
+        function sendSocketMessage(message) {
+            if (!message) { return; }
+            if (!socket) {
+                alertMsg("请先设备接入");
+                return;
+            }
+            socket.send(message);
+            messageDiv("send", message);
+        }
+
+        function alertMsg(msg) {
+            alert(msg);
+        }
+
+        function generateUUID() {
+            var d = new Date().getTime();
+            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = (d + Math.random() * 16) % 16 | 0;
+                d = Math.floor(d / 16);
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            return uuid;
+        }
+
+        function clearLog() {
+            $('#messageDiv').html('');
+        }
+
+        function formatTime() {
+            var date = new Date();
+            date.setHours(date.getHours() - 8);
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var hour = date.getHours();
+            var minute = date.getMinutes();
+            var second = date.getSeconds();
+            return year + '-' + pad(month) + '-' + pad(day) + 'T' + pad(hour) + ':' + pad(minute) + ':' + pad(second) + '.000Z';
+        }
+
+        function pad(value) {
+            return value < 10 ? "0" + value : "" + value;
+        }
+
+        function messageDiv(type, message) {
+            var messageDiv = document.getElementById("messageDiv");
+            var div = document.createElement("div");
+
+            var bgColor, iconUrl, flexClass;
+            if (type === "send") {
+                bgColor = "#e3f2fd";
+                flexClass = "flex-row-reverse";
+                iconUrl = "https://static-qn.51miz.com/assets-v2/images/header/vip-firm-purple@2x.png";
+            } else if (type === "error") {
+                bgColor = "#ffebee";
+                flexClass = "";
+                iconUrl = "https://static-qn.51miz.com/assets-v2/images/header/vip-firm-purple@2x.png";
+            } else {
+                bgColor = "#e8f5e9";
+                flexClass = "";
+                iconUrl = "https://static-qn.51miz.com/assets-v2/images/header/vip-person-green@2x.png";
+            }
+
+            var html = '<div class="d-flex ' + flexClass + ' bd-highlight" style="background:' + bgColor + '; margin:2px 0; border-radius:4px;">' +
+                '<div class="p-2 bd-highlight" style="display:flex; align-items:center; max-width:100%;">' +
+                '<span style="font-size:11px; color:#888; margin-right:6px; white-space:nowrap;">[' + formatTime() + ']</span>' +
+                '<span class="log-entry">' + escapeHtml(message) + '</span>' +
+                '</div></div>';
+
+            div.innerHTML = html;
+            messageDiv.appendChild(div);
+            scrollToBottom(messageDiv);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function scrollToBottom(element) {
+            element.scrollTop = element.scrollHeight;
+        }
+
+    </script>
+
+    <!-- ========== 本地缓存数据 ========== -->
+    <script>
+
+        function setOrderInfo(txnId, power, energy) {
+            var orderInfo = sessionStorage.getItem(txnId);
+            if (orderInfo) {
+                orderInfo = JSON.parse(orderInfo);
+            } else {
+                orderInfo = {};
+            }
+            orderInfo.power = power;
+            orderInfo.energy = Number(orderInfo.energy || 0) + Number(energy);
+            sessionStorage.setItem(txnId, JSON.stringify(orderInfo));
+        }
+
+        function getOrderInfo(txnId) {
+            var orderInfo = sessionStorage.getItem(txnId);
+            if (orderInfo) {
+                orderInfo = JSON.parse(orderInfo);
+            } else {
+                orderInfo = {};
+            }
+            return orderInfo.energy ? Number(orderInfo.energy) : 0;
+        }
+
+        function clearOrderInfo() {
+            sessionStorage.clear();
+        }
+
+    </script>
+
+</body>
+
+</html>
